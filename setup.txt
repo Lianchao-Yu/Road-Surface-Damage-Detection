@@ -2,20 +2,21 @@
 
 ## 角色与项目背景
 
-你在 `/home/jason/gpu-traffic-analytics` 工作。
+你在 `/home/jason/road-damage-detection` 工作。
 
-项目是一个 C++17 / CUDA C++ 的多路交通视频分析原型，代码尚未开始写，目前只有基础目录结构：
+项目是一个 C++17 / CUDA C++ 的**多路道路路面病害检测与严重度分析原型**（Road Surface Damage Detection），代码尚未开始写，目前只有基础目录结构：
 
 ```text
-configs/ data/ docs/ include/traffic/ models/ results/ src/ tests/
+configs/ data/ docs/ include/road_damage/ models/ results/ src/ tests/
 ```
 
 请先阅读 `README.md` 的 P0 部分和目录约定。本次任务**只做环境搭建和验证**，不要开始写业务代码，不要大改目录结构。
 
 这个项目最终需要：
-- FFmpeg 解码
+- FFmpeg 解码道路巡检视频
 - OpenCV 图像处理
-- ONNX Runtime CUDA Execution Provider 推理
+- 预训练路面病害检测/分割 ONNX 模型推理
+- ONNX Runtime CUDA Execution Provider
 - 自写 CUDA 预处理 Kernel
 - CMake + Ninja 构建
 - C++17
@@ -70,7 +71,7 @@ nvidia-smi
 - FFmpeg / OpenCV / nlohmann-json / Ninja / pkg-config
 - Python venv（仅用于生成和检查 ONNX 模型）
 - 跑通 CUDA Smoke Test、FFmpeg/OpenCV 链接测试、ORT CUDA EP 推理测试、CMake+Ninja 构建测试
-- 生成 `/home/jason/gpu-traffic-analytics/docs/environment.md`
+- 生成 `/home/jason/road-damage-detection/docs/environment.md`
 
 **不要安装 onnxruntime-gpu 的 Python 包。** C++ 项目使用 ORT C++ 包；Python 只用于 `onnx` 模型生成/检查。
 
@@ -199,7 +200,7 @@ ldd "$ONNXRUNTIME_ROOT/lib/libonnxruntime.so" | grep "not found" || echo "no mis
 ### 6. Python venv（仅用于 ONNX 模型生成）
 
 ```bash
-cd /home/jason/gpu-traffic-analytics
+cd /home/jason/road-damage-detection
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -414,9 +415,9 @@ cmake --build build -j
 - 本次只执行 Plan B，不要改走 Plan A。
 - 不要在 WSL 安装 Linux NVIDIA 驱动。
 - 不要安装 `cuda` / `cuda-drivers` 元包。
-- 不要改 `README.md`。
+- 环境搭建任务本身不要改 `README.md`；项目改名与文档改写属于独立任务。
 - 不要创建复杂目录，不要开始写业务代码。
-- 不要从 `/mnt/c` 构建或运行大量视频；项目和大文件放 WSL ext4。
+- 不要从 `/mnt/c` 构建或运行大量巡检视频；项目和大文件放 WSL ext4。
 - 不要删除现有 Ubuntu CUDA 12.4 包，除非用户明确同意。
 - 下载 ORT 包约 259 MB，下载前告知用户。
 - 任何一步失败：保留完整错误信息，停止并报告；不要猜测、不要混用不匹配的 CUDA/cuDNN/ORT 版本。

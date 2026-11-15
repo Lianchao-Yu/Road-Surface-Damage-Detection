@@ -1,0 +1,40 @@
+# Build output
+build/
+build-*/
+out/
+cmake-build-*/
+compile_commands.json
+
+# Python environments and caches
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Model / engine artifacts (machine-specific, large)
+models/*
+!models/.gitkeep
+!models/README.md
+*.onnx
+*.engine
+*.plan
+*.trt
+
+# Data and reports (large or generated)
+data/*
+!data/.gitkeep
+!data/README.md
+results/*
+!results/.gitkeep
+!results/README.md
+reports/*
+!reports/.gitkeep
+!reports/README.md
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp

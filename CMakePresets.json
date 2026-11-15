@@ -1,0 +1,128 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+        "RD_BUILD_TESTS": "ON",
+        "RD_BUILD_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "cpu",
+      "displayName": "CPU only (no CUDA / TensorRT)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RD_ENABLE_CUDA": "OFF",
+        "RD_ENABLE_TENSORRT": "OFF"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "CPU only + AddressSanitizer/UBSan",
+      "inherits": "cpu",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "cuda",
+      "displayName": "CUDA (no TensorRT)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RD_ENABLE_CUDA": "ON",
+        "RD_ENABLE_TENSORRT": "OFF",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-13.5/bin/nvcc",
+        "CUDAToolkit_ROOT": "/usr/local/cuda-13.5",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
+      }
+    },
+    {
+      "name": "cuda-trt",
+      "displayName": "CUDA + TensorRT (Release)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RD_ENABLE_CUDA": "ON",
+        "RD_ENABLE_TENSORRT": "ON",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-13.5/bin/nvcc",
+        "CUDAToolkit_ROOT": "/usr/local/cuda-13.5",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
+      }
+    },
+    {
+      "name": "cuda-trt-debug",
+      "displayName": "CUDA + TensorRT (Debug)",
+      "inherits": "cuda-trt",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cpu",
+      "configurePreset": "cpu"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda"
+    },
+    {
+      "name": "cuda-trt",
+      "configurePreset": "cuda-trt"
+    },
+    {
+      "name": "cuda-trt-debug",
+      "configurePreset": "cuda-trt-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "cpu",
+      "configurePreset": "cpu",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cuda-trt",
+      "configurePreset": "cuda-trt",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
