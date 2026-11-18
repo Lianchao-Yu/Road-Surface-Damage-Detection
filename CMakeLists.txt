@@ -66,8 +66,8 @@ endfunction()
 # rd_core: types, configuration, CPU reference code (no CUDA / TensorRT)
 # ---------------------------------------------------------------------------
 add_library(rd_core
-    src/core/version.cpp
-    src/core/preprocess_cpu.cpp
+    src/showinfo/version.cpp
+    src/cpu/preprocess_cpu.cpp
 )
 target_include_directories(rd_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(rd_core PUBLIC cxx_std_17)
@@ -79,7 +79,7 @@ rd_set_warnings(rd_core)
 # ---------------------------------------------------------------------------
 if(RD_ENABLE_CUDA)
     add_library(rd_cuda
-        cuda/cuda_info.cu
+        src/showinfo/cuda_info.cu
     )
     target_include_directories(rd_cuda PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(rd_cuda PUBLIC CUDA::cudart)
@@ -93,7 +93,7 @@ endif()
 if(RD_ENABLE_TENSORRT)
     find_package(TensorRT REQUIRED)
     add_library(rd_trt
-        src/inference/trt_info.cpp
+        src/showinfo/trt_info.cpp
     )
     target_include_directories(rd_trt PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(rd_trt PUBLIC TensorRT::nvinfer TensorRT::nvonnxparser)

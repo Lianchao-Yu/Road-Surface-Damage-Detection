@@ -17,12 +17,18 @@ __pycache__/
 models/*
 !models/.gitkeep
 !models/README.md
+!models/InputFormat.md
 *.onnx
 *.engine
 *.plan
 *.trt
+*.pt
+training/runs/
 
 # Data and reports (large or generated)
+dataset/*
+!dataset/.gitkeep
+!dataset/README.md
 data/*
 !data/.gitkeep
 !data/README.md
@@ -38,3 +44,6 @@ reports/*
 .idea/
 .vscode/
 *.swp
+
+# Ultralytics default output
+runs/

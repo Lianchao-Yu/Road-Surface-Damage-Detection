@@ -3,7 +3,7 @@
 实现位置：
 
 - 接口与契约：`include/road_damage/preprocess.hpp`
-- 参考实现：`src/core/preprocess_cpu.cpp`
+- 参考实现：`src/cpu/preprocess_cpu.cpp`
 - 测试：`tests/test_preprocess_cpu.cpp`
 
 ## 1. 作用
