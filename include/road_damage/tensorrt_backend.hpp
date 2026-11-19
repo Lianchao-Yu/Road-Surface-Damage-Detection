@@ -18,6 +18,7 @@ namespace trt
         TensorRTBackend &operator=(TensorRTBackend &&) noexcept;      // move assignment
         bool TensorRTLoader(const std::string &enginePath);           // function to load TensorRT engine from a serialized file
         bool Tensor_Infer(const std::vector<float> &hostInput, std::vector<float> &hostOutput); //function to conduct infer
+        void resetResources();
     private:
         struct Impl;  // forward declaration of implementation class
         std::unique_ptr<Impl> pImpl; // pointer to implementation

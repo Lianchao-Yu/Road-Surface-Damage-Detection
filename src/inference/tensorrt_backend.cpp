@@ -51,17 +51,7 @@ namespace trt
 
       ~Impl() //release cuda resource
       {
-         for (auto &kv : deviceBuffers)
-         {
-            if (kv.second != nullptr)
-            {
-               cudaFree(kv.second);
-            }
-         }
-         if (stream != nullptr)
-         {
-            cudaStreamDestroy(stream);
-         }
+
       }
    };
    TensorRTBackend::TensorRTBackend() : pImpl(std::make_unique<Impl>()) {} // constructor implementation
@@ -72,6 +62,10 @@ namespace trt
       // 1. Load the TensorRT engine from a serialized file
       // 2. Create an execution context for the engine
       // 3. Prepare input data and allocate memory for inputs and outputs.
+
+
+      //=============== 0. release resource first
+      resetResources();
       //=============== 1. read the serialized engine file into a vector of chars ===============
 
       std::vector<char> engineData;
@@ -106,41 +100,56 @@ namespace trt
 
       //=============== 2. Create an execution context for the engine ===============
       // 1. 指定 GPU 设备
-      cudaSetDevice(pImpl->deviceId);
+      cudaError_t devErr = cudaSetDevice(pImpl->deviceId);
+      if (devErr != cudaSuccess)
+      {
+         std::cerr << "Failed to set CUDA device " << pImpl->deviceId
+                   << ": " << cudaGetErrorString(devErr) << std::endl;
+         return false;
+      }
 
-      // 2. 创建 Runtime
+      // 2.创建runtime
       pImpl->runtime.reset(nvinfer1::createInferRuntime(pImpl->logger));
       if (!pImpl->runtime)
+      {
+         std::cerr << "Failed to create TensorRT Runtime!" << std::endl;
          return false;
+      }
 
-      // 3. 反序列化生成 Engine
+      //3. 创建engine,反序列化
       pImpl->engine.reset(pImpl->runtime->deserializeCudaEngine(engineData.data(), engineData.size()));
       if (!pImpl->engine)
+      {
+         std::cerr << "Failed to deserialize CUDA Engine!" << std::endl;
+         resetResources();
          return false;
+      }
 
-      // 4. 创建 Execution Context （创建执行上下文）
+      //4, 创建上下文
       pImpl->context.reset(pImpl->engine->createExecutionContext());
       if (!pImpl->context)
+      {
+         std::cerr << "Failed to create Execution Context!" << std::endl;
+         resetResources();
          return false;
+      }
 
       //=============== 3. Prepare input data and allocate memory for inputs and outputs ===============
-
-      // create a CUDA stream for asynchronous execution
       if (pImpl->stream != nullptr)
       {
          cudaStreamDestroy(pImpl->stream);
          pImpl->stream = nullptr;
+
       }
 
       // create a new CUDA stream
       if (cudaStreamCreate(&pImpl->stream) != cudaSuccess)
       {
          std::cerr << "Failed to create CUDA stream!" << std::endl;
+         resetResources();
          return false;
       }
-
-      // 接下来继续写遍历张量、cudaMalloc 和 setTensorAddress 的代码...
-
+      //Traverse the tensor and get the input and output name
       for (int i = 0; i < pImpl->engine->getNbIOTensors(); i++)
       {
          auto name = pImpl->engine->getIOTensorName(i);
@@ -154,44 +163,144 @@ namespace trt
             // Handle output tensor
             pImpl->outputTensorsNames.push_back(name);
          }
+      }
 
-         // Allocate device memory for the tensor
-         void *devicePtr = nullptr;
-         size_t tensorVolume = 1;
-         auto dims = pImpl->engine->getTensorShape(name);
-         auto dataType = pImpl->engine->getTensorDataType(name); // Get the data type of the tensor
+      // ========== 4.Malloc device memory for the input tensor=============================
+      //Malloc input tensor memory
+
+      for(const auto &name : pImpl->inputTensorsNames)
+      {
+         auto dims = pImpl->engine->getTensorShape(name.c_str());        // Get a tensor's input dimention. [N, C, H, W]
+         auto dataType = pImpl->engine->getTensorDataType(name.c_str()); // Get the data type of the tensor
+
+         // 1. 检查是否包含动态维度 (-1) 例如[-1, 1, -1, 1]
+         bool hasDynamicDim = false;
          for (int j = 0; j < dims.nbDims; j++)
          {
-            if (dims.d[j] < 0) // invalid tensor input
+            if (dims.d[j] < 0)
             {
-               std::cerr << "Dynamic shape is not supported yet for tensor: " << name << std::endl;
+               hasDynamicDim = true;
+               break;
+            }
+         }
+
+         // 2. assign maximum memory(如果为动态维度，则查询支持的输入维度)
+         if(hasDynamicDim)
+         {
+            dims = pImpl->engine->getProfileShape(name.c_str(), 0, nvinfer1::OptProfileSelector::kMAX); // Set the maximum supported size of dimention
+            if (!pImpl->context->setInputShape(name.c_str(), dims))
+            {
+               std::cerr << "Failed to set max input shape for tensor: " << name << std::endl;
+               resetResources();
                return false;
             }
-            tensorVolume *= dims.d[j];
          }
-         auto typeSize = (dataType == nvinfer1::DataType::kFLOAT) ? sizeof(float) :
-                         (dataType == nvinfer1::DataType::kHALF) ? 2 :
-                         (dataType == nvinfer1::DataType::kINT8) ? sizeof(int8_t) :
-                         (dataType == nvinfer1::DataType::kINT32) ? sizeof(int32_t) : 0;
-         if (typeSize == 0) 
+
+         // 3. Malloc device memory for input tensor
+         size_t tensorVolume = 1;
+         for (int j = 0; j < dims.nbDims; j++)
+         {
+            if(dims.d[j] <= 0)
+            {
+               std::cerr << "Unsupported input dimention" << name << std::endl;
+               resetResources();
+               return false;
+            }
+            tensorVolume *= static_cast<size_t>(dims.d[j]); //get the tensor volume
+         }
+
+         auto typeSize = (dataType == nvinfer1::DataType::kFLOAT) ? sizeof(float) : (dataType == nvinfer1::DataType::kHALF) ? 2
+                                                                                : (dataType == nvinfer1::DataType::kINT8)   ? sizeof(int8_t)
+                                                                                : (dataType == nvinfer1::DataType::kINT32)  ? sizeof(int32_t)
+                                                                                                                            : 0;
+         //Find unsupported type
+         if (typeSize == 0)
          {
             std::cerr << "Unsupported data type for tensor: " << name << std::endl;
+            resetResources();
             return false;
          }
+
+         // Calculate the size and malloc
          size_t tensorSize = tensorVolume * typeSize;
+         void *devicePtr = nullptr;
          if (cudaMalloc(&devicePtr, tensorSize) != cudaSuccess)
          {
             std::cerr << "Failed to allocate device memory for tensor: " << name << std::endl;
+            resetResources();
             return false;
          }
-         pImpl->context->setTensorAddress(name, devicePtr);     // Set the tensor address in the execution context
+
+         if (!pImpl->context->setTensorAddress(name.c_str(), devicePtr)) // Set the tensor address in the execution context
+         {
+            cudaFree(devicePtr);
+            std::cerr << "Failed to set address for output tensor: " << name << std::endl;
+            resetResources();
+            return false;
+         }
          pImpl->deviceBuffers[name] = devicePtr;            // Save the device buffer pointer
          pImpl->bufferSizes[name] = tensorSize;             // Save the size of the buffer for later use
       }
-      // Mark the engine as loaded successfully
+
+      // ============ 5. Malloc device memory for output tensor =============
+
+      for (const auto &name : pImpl->outputTensorsNames)
+      {
+         auto dims = pImpl->context->getTensorShape(name.c_str());        // Get a tensor's output dimention. [N, C, H, W]
+         auto dataType = pImpl->engine->getTensorDataType(name.c_str()); // Get the data type of the tensor
+
+         //get the tensor volume
+         size_t tensorVolume = 1; 
+         for (int j = 0; j < dims.nbDims; j++)
+         {
+            if(dims.d[j] <= 0)
+            {
+               std::cerr << "Unsupported output dimention" << name << std::endl;
+               resetResources();
+               return false;
+            }
+            tensorVolume *= static_cast<size_t>(dims.d[j]); 
+         }
+
+         //get the dimention's data type
+         auto typeSize = (dataType == nvinfer1::DataType::kFLOAT) ? sizeof(float) : (dataType == nvinfer1::DataType::kHALF) ? 2
+                                                                                : (dataType == nvinfer1::DataType::kINT8)   ? sizeof(int8_t)
+                                                                                : (dataType == nvinfer1::DataType::kINT32)  ? sizeof(int32_t)
+                                                                                                                            : 0;
+         // Find unsupported type
+         if (typeSize == 0)
+         {
+            std::cerr << "Unsupported data type for tensor: " << name << std::endl;
+            resetResources();
+            return false;
+         }
+
+         // Calculate the size and malloc
+         size_t tensorSize = tensorVolume * typeSize;
+         void *devicePtr = nullptr;
+         if (cudaMalloc(&devicePtr, tensorSize) != cudaSuccess)
+         {
+            std::cerr << "Failed to allocate device memory for tensor: " << name << std::endl;
+            resetResources();
+            return false;
+         }
+
+         if (!pImpl->context->setTensorAddress(name.c_str(), devicePtr)) // Set the tensor address in the execution context
+         {
+            cudaFree(devicePtr);
+            std::cerr << "Failed to set address for output tensor: " << name << std::endl;
+            resetResources();
+            return false;
+         }
+         pImpl->deviceBuffers[name] = devicePtr;            // Save the device buffer pointer
+         pImpl->bufferSizes[name] = tensorSize;             // Save the size of the buffer for later use
+      }
+
+      // =============== Mark the engine as loaded successfully ================
       pImpl->loaded = true;
       return true;
    }
+
 
    //推理函数 (调用loader -> 启动Tensor_Infer)
    //IO结构：单输入单输出
@@ -244,5 +353,49 @@ namespace trt
       }
 
       return true;
+   }
+
+   // reset resource
+   void TensorRTBackend::resetResources()
+   {
+      /*
+      类支持移动语义（Move），当一个 TensorRTBackend 对象被 std::move 走之后，
+      原对象的 pImpl 会变成 nullptr。此时原对象析构如果调用 resetResources()，
+      直接访问 pImpl->context 会触发空指针解引用（Segfault）。需要加上判空语句
+      */
+
+      //判空保护
+      if(pImpl == nullptr) return;
+      
+      // release tensor object
+      pImpl->context.reset();
+      pImpl->engine.reset();
+      pImpl->runtime.reset();
+
+      // release buffer
+      for (auto &kv : pImpl->deviceBuffers)
+      {
+         if (kv.second != nullptr)
+         {
+            cudaFree(kv.second);
+         }
+      }
+
+      // release vector and map resource
+      if (pImpl->inputTensorsNames.size() != 0)
+         pImpl->inputTensorsNames.clear();
+      if (pImpl->outputTensorsNames.size() != 0)
+         pImpl->outputTensorsNames.clear();
+      if (pImpl->bufferSizes.size() != 0)
+         pImpl->bufferSizes.clear();
+      if (pImpl->deviceBuffers.size() != 0)
+         pImpl->deviceBuffers.clear();
+
+      // release stream
+      if (pImpl->stream != nullptr)
+      {
+         cudaStreamDestroy(pImpl->stream);
+         pImpl->stream = nullptr;
+      }
    }
 };
