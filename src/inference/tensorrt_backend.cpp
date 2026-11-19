@@ -48,21 +48,17 @@ namespace trt
       std::vector<std::string> outputTensorsNames;           // save output tensor names
       std::unordered_map<std::string, void *> deviceBuffers; // save device buffers for input and output tensors
       std::unordered_map<std::string, size_t> bufferSizes;   // save device buffersize for input and output tensors
-
-      ~Impl() //release cuda resource
-      {
-
-      }
    };
    TensorRTBackend::TensorRTBackend() : pImpl(std::make_unique<Impl>()) {} // constructor implementation
-   TensorRTBackend::~TensorRTBackend() = default;                          // destructor implementation
+   TensorRTBackend::~TensorRTBackend() { resetResources(); };            // destructor implementation
 
    bool TensorRTBackend::TensorRTLoader(const std::string &enginePath)
    {
       // 1. Load the TensorRT engine from a serialized file
       // 2. Create an execution context for the engine
-      // 3. Prepare input data and allocate memory for inputs and outputs.
-
+      // 3. Malloc memory for inputs and outputs. (根据输入维度进行动态调整分配显存)
+      //PS: 动态维度即，单个张量的尺寸可变。example: [1, 1, 640, 640]  -> [1, 1, 800, 800]
+      //如果onnx生成的engine支持动态维度则会以 -1占位。 example: [1, 1, -1, -1], 这里-1表示Bidth和Width可变
 
       //=============== 0. release resource first
       resetResources();
