@@ -94,9 +94,14 @@ if(RD_ENABLE_TENSORRT)
     find_package(TensorRT REQUIRED)
     add_library(rd_trt
         src/showinfo/trt_info.cpp
+        src/inference/tensorrt_backend.cpp
     )
     target_include_directories(rd_trt PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    target_link_libraries(rd_trt PUBLIC TensorRT::nvinfer TensorRT::nvonnxparser)
+    target_link_libraries(rd_trt PUBLIC
+        TensorRT::nvinfer
+        TensorRT::nvonnxparser
+        CUDA::cudart
+    )
     target_compile_definitions(rd_trt PUBLIC RD_WITH_TENSORRT=1)
     rd_set_warnings(rd_trt)
 endif()

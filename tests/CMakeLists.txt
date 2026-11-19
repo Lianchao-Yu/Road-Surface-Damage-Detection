@@ -15,6 +15,10 @@ else()
     message(STATUS "rd_tests: OpenCV not found, cross-check test skipped")
 endif()
 
+target_compile_definitions(rd_tests PRIVATE
+    RD_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_link_libraries(rd_tests PRIVATE
     rd_core
     GTest::gtest
@@ -26,6 +30,7 @@ if(TARGET rd_cuda)
 endif()
 
 if(TARGET rd_trt)
+    target_sources(rd_tests PRIVATE test_tensorrt_backend.cpp)
     target_link_libraries(rd_tests PRIVATE rd_trt)
 endif()
 
