@@ -22,30 +22,7 @@ struct Normalization {
     float std[3] = {1.0f, 1.0f, 1.0f};
 };
 
-/// Reference preprocessing contract (CPU implementation is the golden path).
-///
-/// 1. Bilinear resize with align_corners = false (half-pixel mapping):
-///        scale_x = src_width  / dst_width
-///        scale_y = src_height / dst_height
-///        sx = (dst_x + 0.5f) * scale_x - 0.5f
-///        sy = (dst_y + 0.5f) * scale_y - 0.5f
-///    Source coordinates are clamped to [0, src-1] on both axes, i.e.
-///    border replicate. This matches PyTorch `interpolate(..., mode="bilinear",
-///    align_corners=False)` and ONNX Resize `coordinate_transformation_mode=
-///    "half_pixel"` with edge clamping.
-///
-/// 2. Channel order: BGR -> RGB (pure channel swap, no color-space conversion)
-///    when `bgr_to_rgb` is true.
-///
-/// 3. Normalization: v = (pixel / 255 - mean[c]) / std[c], with `c` the output
-///    (RGB) channel index.
-///
-/// 4. Layout: NCHW float32 with N = 1, index = c * H * W + y * W + x.
-///
-/// ROI/tiling, letterbox padding and FP16 conversion are intentionally out of
-/// scope for the reference path; they are added by the CUDA preprocessing
-/// stage and must be validated against this function for the overlapping
-/// operations.
+
 struct PreprocessSpec {
     int dst_width = 640;
     int dst_height = 640;
@@ -59,6 +36,7 @@ std::size_t tensor_element_count(const PreprocessSpec& spec);
 /// Run the reference preprocessing pipeline.
 /// Throws std::invalid_argument on malformed input (null data, non-positive
 /// dimensions, stride smaller than width * 3, zero std).
-std::vector<float> preprocess_bgr8_to_nchw_f32(const ImageBgr8& src, const PreprocessSpec& spec);
+std::vector<float> preprocess_bgr8_to_nchw_f32_single(const ImageBgr8& src, const PreprocessSpec& spec);
+void preprocess_bgr8_to_nchw_f32(const ImageBgr8& src, const PreprocessSpec& spec, float* dst,  std::size_t dst_size);
 
 }  // namespace rd

@@ -1,0 +1,35 @@
+# RT-DETRv2-S / R18 fine-tuning on RDD2022 Japan (4 classes).
+# Include the official COCO config and override only what this project needs.
+__include__:
+  - /home/jason/opt/RT-DETR/rtdetrv2_pytorch/configs/rtdetrv2/rtdetrv2_r18vd_120e_coco.yml
+
+output_dir: /home/jason/road-damage-detection/training/runs/rtdetrv2_r18vd
+
+num_classes: 4
+remap_mscoco_category: False
+
+# 120 epochs is unnecessary for the first project baseline.
+epoches: 24
+print_freq: 50
+checkpoint_freq: 1
+sync_bn: False
+
+train_dataloader:
+  dataset:
+    img_folder: /home/jason/road-damage-detection/dataset/RDD2022/images/train
+    ann_file: /home/jason/road-damage-detection/dataset/RDD2022/coco/annotations/instances_train2017.json
+    transforms:
+      policy:
+        # Stop the heavy augmentation near the end of the shortened schedule.
+        epoch: 23
+  total_batch_size: 16
+  num_workers: 4
+  collate_fn:
+    stop_epoch: 14
+
+val_dataloader:
+  dataset:
+    img_folder: /home/jason/road-damage-detection/dataset/RDD2022/images/val
+    ann_file: /home/jason/road-damage-detection/dataset/RDD2022/coco/annotations/instances_val2017.json
+  total_batch_size: 8
+  num_workers: 4
