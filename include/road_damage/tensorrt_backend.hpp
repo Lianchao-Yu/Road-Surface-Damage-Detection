@@ -15,11 +15,11 @@ namespace trt
         kCPU
     };
 
-    struct TensorView
+    struct TensorView //Tensor input and outoput structure
     {
         void *data = nullptr;                                  // data pointer
         nvinfer1::Dims dims{};                                 // tensor dimention
-        nvinfer1::DataType dtype = nvinfer1::DataType::kFLOAT; // data type
+        nvinfer1::DataType dtype = nvinfer1::DataType::kFLOAT; // default data type is fp32
         MemoryType memType = MemoryType::kCPU;                 // memory type
     };
 

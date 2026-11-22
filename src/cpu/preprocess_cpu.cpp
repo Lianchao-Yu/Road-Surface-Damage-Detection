@@ -1,4 +1,4 @@
-#include "road_damage/preprocess.hpp"
+#include "road_damage/preprocess_cpu.hpp"
 
 #include <algorithm>
 #include <cmath>

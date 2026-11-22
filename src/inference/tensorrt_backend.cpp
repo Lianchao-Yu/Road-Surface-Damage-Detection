@@ -48,6 +48,7 @@ namespace trt
       std::vector<std::string> outputTensorsNames;           // save output tensor names
       std::unordered_map<std::string, void *> deviceBuffers; // save device buffers for input and output tensors
       std::unordered_map<std::string, size_t> bufferSizes;   // save device buffersize for input and output tensors
+      std::unordered_map<std::string, void*> hostBuffers;    // save host buffer
    };
    TensorRTBackend::TensorRTBackend() : pImpl(std::make_unique<Impl>()) {} // constructor implementation
    TensorRTBackend::~TensorRTBackend() { resetResources(); };              // destructor implementation
@@ -65,8 +66,8 @@ namespace trt
 
       //=============== 0. release resource first
       resetResources();
-      //=============== 1. read the serialized engine file into a vector of chars ===============
 
+      //=============== 1. read the serialized engine file into a vector of chars ===============
       std::vector<char> engineData;
       // Open the engine file in binary mode and move the file pointer to the end
       std::ifstream engineFile(enginePath, std::ios::binary | std::ios::ate);
@@ -133,7 +134,7 @@ namespace trt
          return false;
       }
 
-      //=============== 3. Prepare input data and allocate memory for inputs and outputs ===============
+      //=============== 3. Classify input/outoput tensor type ===============
       if (pImpl->stream != nullptr)
       {
          cudaStreamDestroy(pImpl->stream);
@@ -151,12 +152,12 @@ namespace trt
       for (int i = 0; i < pImpl->engine->getNbIOTensors(); i++)
       {
          auto name = pImpl->engine->getIOTensorName(i);
-         if (pImpl->engine->getTensorIOMode(name) == nvinfer1::TensorIOMode::kINPUT)
+         if (pImpl->engine->getTensorIOMode(name) == nvinfer1::TensorIOMode::kINPUT)  //save input tensor name
          {
             // Handle input tensor
             pImpl->inputTensorsNames.push_back(name);
          }
-         if (pImpl->engine->getTensorIOMode(name) == nvinfer1::TensorIOMode::kOUTPUT)
+         if (pImpl->engine->getTensorIOMode(name) == nvinfer1::TensorIOMode::kOUTPUT)  //save outpout tensor name
          {
             // Handle output tensor
             pImpl->outputTensorsNames.push_back(name);
@@ -276,86 +277,41 @@ namespace trt
          // Calculate the size and malloc
          size_t tensorSize = tensorVolume * typeSize;
          void *devicePtr = nullptr;
+         void *hostPtr = nullptr;
+
+         //malloc output memory on GPU
          if (cudaMalloc(&devicePtr, tensorSize) != cudaSuccess)
          {
             std::cerr << "Failed to allocate device memory for tensor: " << name << std::endl;
             resetResources();
             return false;
          }
+         // Malloc pinned memory on host
+         if (cudaMallocHost(&hostPtr, tensorSize) != cudaSuccess)
+         {
+            std::cerr << "Failed to allocate host memory for tensor: " << name << std::endl;
+            resetResources();
+            return false;
+         }
 
-         if (!pImpl->context->setTensorAddress(name.c_str(), devicePtr)) // Set the tensor address in the execution context
+         // Set the tensor address in the execution context
+         if (!pImpl->context->setTensorAddress(name.c_str(), devicePtr)) 
          {
             cudaFree(devicePtr);
             std::cerr << "Failed to set address for output tensor: " << name << std::endl;
             resetResources();
             return false;
          }
+         //
          pImpl->deviceBuffers[name] = devicePtr; // Save the device buffer pointer
          pImpl->bufferSizes[name] = tensorSize;  // Save the size of the buffer for later use
+         pImpl->hostBuffers[name] = hostPtr;
       }
 
       // =============== Mark the engine as loaded successfully ================
       pImpl->loaded = true;
       return true;
    }
-
-   // // 推理函数 (调用loader -> 启动Tensor_Infer)
-   // /*缺陷：
-   //       1. 输入类型只能固定为float
-   //       2. 输入H,W 动态变化会失效
-   //       3. 如果Host端使用锁页内存，Vector无法控制，需要额外拷贝
-   //       4. 如果在GPU端实现zero-copy, vector需要GPU->CPU, 再CPU->GPU导致重复copy
-   // */
-   // bool TensorRTBackend::Tensor_Infer(const std::vector<float> &hostInput, std::vector<float> &hostOutput)
-   // {
-
-   //    //=============== 1. Copy H2D ===============
-   //    if (!pImpl->loaded)
-   //    {
-   //       std::cerr << "Engine is not loaded. Cannot execute inference." << std::endl;
-   //       return false;
-   //    }
-
-   //    const std::string &inName = pImpl->inputTensorsNames[0];
-   //    const std::string &outName = pImpl->outputTensorsNames[0];
-   //    if (hostInput.size() * sizeof(float) != pImpl->bufferSizes[inName])
-   //    {
-   //       std::cerr << "Input data size mismatch!" << std::endl;
-   //       return false;
-   //    }
-
-   //    // 可能需要pinned memory,可以作为性能测试
-   //    if (cudaMemcpyAsync(pImpl->deviceBuffers[inName], hostInput.data(),
-   //                        pImpl->bufferSizes[inName], cudaMemcpyHostToDevice, pImpl->stream) != cudaSuccess)
-   //    {
-   //       std::cerr << "Fail to Copy" << std::endl;
-   //       return false;
-   //    }
-
-   //    //============ 2. Execute Infer
-   //    if (!pImpl->context->enqueueV3(pImpl->stream))
-   //    {
-   //       std::cerr << "TensorRT enqueueV3 failed!" << std::endl;
-   //       return false;
-   //    }
-
-   //    //============ 3. Copy D2H (GPU -> CPU)
-   //    hostOutput.resize(pImpl->bufferSizes[outName] / sizeof(float));
-   //    if (cudaMemcpyAsync(hostOutput.data(), pImpl->deviceBuffers[outName],
-   //                        pImpl->bufferSizes[outName], cudaMemcpyDeviceToHost, pImpl->stream) != cudaSuccess)
-   //    {
-   //       return false;
-   //    }
-
-   //    // ============ 4. Synchronize Stream ============
-   //    if (cudaStreamSynchronize(pImpl->stream) != cudaSuccess)
-   //    {
-   //       std::cerr << "CUDA stream synchronize failed!" << std::endl;
-   //       return false;
-   //    }
-
-   //    return true;
-   // }
 
    bool TensorRTBackend::TensorInfer(const std::unordered_map<std::string, trt::TensorView> &input,
                                      std::unordered_map<std::string, trt::TensorView> &output)
@@ -375,7 +331,7 @@ namespace trt
 
    {
       //=============== 1. Copy H2D or D2D============================
-      if (!pImpl->loaded || !pImpl)
+      if (!pImpl || !pImpl->loaded)
       {
          std::cerr << "Engine is not loaded. Cannot execute inference." << std::endl;
          return false;
@@ -447,12 +403,36 @@ namespace trt
             return false;
          }
 
-         // ==== Async copy memory==========
-         cudaMemcpyKind kind = (Inputview.memType == MemoryType::kCPU)
-                                   ? cudaMemcpyHostToDevice
-                                   : cudaMemcpyDeviceToDevice;
-         if (cudaMemcpyAsync(pImpl->deviceBuffers[name], Inputview.data, actualBytes, kind, pImpl->stream) != cudaSuccess)
+         // ==== Async copy memory, H2D ==========
+         // cudaMemcpyKind kind = (Inputview.memType == MemoryType::kCPU)
+         //                           ? cudaMemcpyHostToDevice
+         //                           : cudaMemcpyDeviceToDevice;
+
+         // ======== case 1: GPU 2 GPU ==============
+         if (Inputview.memType == MemoryType::kGPU)
          {
+            if (!pImpl->context->setTensorAddress(name.c_str(), Inputview.data))
+            {
+               return false;
+            }
+         }
+         // ======== case 2: GPU 2 CPU ==============
+         else if (Inputview.memType == MemoryType::kCPU)
+         {
+            if (!pImpl->context->setTensorAddress(name.c_str(), pImpl->deviceBuffers[name]))
+            {
+               return false;
+            }
+
+            if (cudaMemcpyAsync(pImpl->deviceBuffers[name],
+                                 Inputview.data, actualBytes, cudaMemcpyHostToDevice, pImpl->stream) != cudaSuccess)
+            {
+               return false;
+            }
+         }
+         else
+         {
+            std::cerr << "Unsupported memory type for input: " << name << std::endl;
             return false;
          }
       }
@@ -472,17 +452,13 @@ namespace trt
       // 获取推导后的输出维度，将结果拷回调用方提供的输出缓冲区
       for (const auto &name : pImpl->outputTensorsNames)
       {
-         auto it = output.find(name);
-         if (it == output.end() || it->second.data == nullptr)
-         {
-            std::cerr << "Missing output buffer for: " << name << std::endl;
-            return false;
-         }
-         TensorView &OutputView = it->second;
 
          // 回填本次实际推导出的输出维度，方便上层做后处理解析
-         OutputView.dims = pImpl->context->getTensorShape(name.c_str());
-         size_t actualBytes = computeTensorBytes(OutputView);
+         TensorView &OutputView = output[name];
+         OutputView.dims = pImpl->context->getTensorShape(name.c_str());    // Get the dimmention from context
+         OutputView.dtype = pImpl->engine->getTensorDataType(name.c_str()); // Check the actual output datatype
+         size_t actualBytes = computeTensorBytes(OutputView);               // Calculate outupt actual byteszie
+         void *hostPtr = pImpl->hostBuffers[name];                          // Host pointer
 
          if (actualBytes == 0 || actualBytes > pImpl->bufferSizes[name])
          {
@@ -490,11 +466,37 @@ namespace trt
             return false;
          }
 
-         cudaMemcpyKind kind = (OutputView.memType == MemoryType::kCPU)
-                                   ? cudaMemcpyDeviceToHost
-                                   : cudaMemcpyDeviceToDevice;
-         if (cudaMemcpyAsync(OutputView.data, pImpl->deviceBuffers[name], actualBytes, kind, pImpl->stream) != cudaSuccess)
+         // copy back to host
+         if (OutputView.memType == MemoryType::kCPU) 
          {
+            if (cudaMemcpyAsync(hostPtr, pImpl->deviceBuffers[name],
+                                actualBytes, cudaMemcpyDeviceToHost, pImpl->stream) != cudaSuccess)
+            {
+               return false;
+            }
+            OutputView.data = hostPtr;
+         }
+         // copy back to GPU
+         else if (OutputView.memType == MemoryType::kGPU) 
+         {
+            //Case B: GPU hanvn't maloc memory 
+            if (OutputView.data == nullptr)
+            {
+               OutputView.data = pImpl->deviceBuffers[name];
+            }
+            //case A: GPU malloc a new memory area
+            else if (OutputView.data != pImpl->deviceBuffers[name])
+            {
+               if (cudaMemcpyAsync(OutputView.data, pImpl->deviceBuffers[name],
+                                   actualBytes, cudaMemcpyDeviceToDevice, pImpl->stream) != cudaSuccess)
+               {
+                  return false;
+               }
+            }
+         }
+         else
+         {
+            std::cerr << "Failed to copy the output" << name << std::endl;
             return false;
          }
       }
@@ -503,7 +505,7 @@ namespace trt
       return cudaStreamSynchronize(pImpl->stream) == cudaSuccess;
    }
 
-   // reset resource
+   // Reset resource
    void TensorRTBackend::resetResources()
    {
       /*
