@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 
-#include "road_damage/preprocess.hpp"
+#include "road_damage/preprocess_cpu.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 13) {
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     }
 
     const rd::ImageBgr8 image{buffer.data(), width, height, stride};
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     for (float value : out) {
         std::printf("%.9g\n", value);
     }

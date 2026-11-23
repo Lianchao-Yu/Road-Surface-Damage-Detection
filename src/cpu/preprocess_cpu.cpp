@@ -24,10 +24,10 @@
 ///
 /// 4. Layout: NCHW float32 with N = 1, index = c * H * W + y * W + x.
 ///
-/// ROI/tiling, letterbox padding and FP16 conversion are intentionally out of
-/// scope for the reference path; they are added by the CUDA preprocessing
-/// stage and must be validated against this function for the overlapping
-/// operations.
+/// ROI/tiling and FP16 conversion are intentionally out of scope for the
+/// reference path; letterbox padding is provided by the separate
+/// preprocess_bgr8_to_nchw_f32_letterbox() entry point and must be validated
+/// against the direct-resize path for the overlapping operations.
 namespace rd
 {
     namespace
@@ -95,6 +95,135 @@ namespace rd
         }
         return static_cast<std::size_t>(3) * static_cast<std::size_t>(spec.dst_height) *
                static_cast<std::size_t>(spec.dst_width);
+    }
+
+    LetterboxMeta compute_letterbox_meta(const ImageBgr8 &src, const PreprocessSpec &spec)
+    {
+        validate(src, spec);
+
+        LetterboxMeta meta;
+        meta.origWidth = src.width;
+        meta.origHeight = src.height;
+        meta.inputWidth = spec.dst_width;
+        meta.inputHeight = spec.dst_height;
+
+        // Keep the aspect ratio: the image is first scaled to fit inside the
+        // destination canvas, then the remaining area is padded.
+        meta.scale = std::min(static_cast<float>(spec.dst_width) / static_cast<float>(src.width),
+                              static_cast<float>(spec.dst_height) / static_cast<float>(src.height));
+
+        const int resized_w = std::max(1, static_cast<int>(std::round(src.width * meta.scale)));
+        const int resized_h = std::max(1, static_cast<int>(std::round(src.height * meta.scale)));
+
+        // Ultralytics centers the image. Integer padding keeps the tensor
+        // dimensions and the inverse mapping deterministic.
+        meta.padX = static_cast<float>((spec.dst_width - resized_w) / 2);
+        meta.padY = static_cast<float>((spec.dst_height - resized_h) / 2);
+        return meta;
+    }
+
+    void preprocess_bgr8_to_nchw_f32_letterbox(const ImageBgr8 &src, const PreprocessSpec &spec,
+                                               const LetterboxMeta &meta, float pad_value,
+                                               float *dst, std::size_t dst_size)
+    {
+        validate(src, spec);
+        if (dst == nullptr)
+        {
+            throw std::invalid_argument("preprocess: dst pointer is null");
+        }
+
+        // The metadata must describe this exact image/spec pair; otherwise
+        // the padding and the postprocess inverse mapping would be wrong.
+        if (meta.origWidth != src.width || meta.origHeight != src.height ||
+            meta.inputWidth != spec.dst_width || meta.inputHeight != spec.dst_height ||
+            !(meta.scale > 0.0f))
+        {
+            throw std::invalid_argument("preprocess: letterbox metadata does not match input specs");
+        }
+
+        const std::size_t required = tensor_element_count(spec);
+        if (dst_size < required)
+        {
+            throw std::invalid_argument("preprocess: dst buffer is smaller than required tensor elements");
+        }
+
+        const int dst_w = spec.dst_width;
+        const int dst_h = spec.dst_height;
+        const int resized_w = std::max(1, static_cast<int>(std::round(src.width * meta.scale)));
+        const int resized_h = std::max(1, static_cast<int>(std::round(src.height * meta.scale)));
+        const int pad_x = static_cast<int>(meta.padX);
+        const int pad_y = static_cast<int>(meta.padY);
+        if (resized_w > dst_w || resized_h > dst_h || pad_x < 0 || pad_y < 0)
+        {
+            throw std::invalid_argument("preprocess: invalid letterbox geometry");
+        }
+
+        const std::size_t plane = static_cast<std::size_t>(dst_h) * static_cast<std::size_t>(dst_w);
+        const float pad_normalized = pad_value * kInv255;
+        const float *mean = spec.norm.mean;
+        const float *stddev = spec.norm.std;
+
+        // Start with a canvas filled by the normalized padding value. Only the
+        // centered resized region is overwritten below.
+        for (int c = 0; c < 3; ++c)
+        {
+            const float value = (pad_normalized - mean[c]) / stddev[c];
+            std::fill_n(dst + static_cast<std::size_t>(c) * plane, plane, value);
+        }
+
+        // Bilinear mapping is computed against the resized (not padded) image,
+        // matching cv2.resize(src, (resized_w, resized_h)) followed by padding.
+        const float scale_x = static_cast<float>(src.width) / static_cast<float>(resized_w);
+        const float scale_y = static_cast<float>(src.height) / static_cast<float>(resized_h);
+
+        for (int dy = 0; dy < resized_h; ++dy)
+        {
+            const float sy = clamp_coordinate((static_cast<float>(dy) + 0.5f) * scale_y - 0.5f,
+                                              src.height);
+            const int y0 = static_cast<int>(std::floor(sy));
+            const int y1 = std::min(y0 + 1, src.height - 1);
+            const float fy = sy - static_cast<float>(y0);
+
+            for (int dx = 0; dx < resized_w; ++dx)
+            {
+                const float sx = clamp_coordinate((static_cast<float>(dx) + 0.5f) * scale_x - 0.5f,
+                                                  src.width);
+                const int x0 = static_cast<int>(std::floor(sx));
+                const int x1 = std::min(x0 + 1, src.width - 1);
+                const float fx = sx - static_cast<float>(x0);
+
+                const float w00 = (1.0f - fx) * (1.0f - fy);
+                const float w10 = fx * (1.0f - fy);
+                const float w01 = (1.0f - fx) * fy;
+                const float w11 = fx * fy;
+
+                // Destination coordinates include the letterbox offset.
+                const std::size_t dst_index =
+                    static_cast<std::size_t>(dy + pad_y) * static_cast<std::size_t>(dst_w) +
+                    static_cast<std::size_t>(dx + pad_x);
+
+                for (int c = 0; c < 3; ++c)
+                {
+                    const int src_c = spec.bgr_to_rgb ? (2 - c) : c;
+                    const float value = w00 * sample(src, x0, y0, src_c) +
+                                        w10 * sample(src, x1, y0, src_c) +
+                                        w01 * sample(src, x0, y1, src_c) +
+                                        w11 * sample(src, x1, y1, src_c);
+                    dst[static_cast<std::size_t>(c) * plane + dst_index] =
+                        (value - mean[c]) / stddev[c];
+                }
+            }
+        }
+    }
+
+    std::vector<float> preprocess_bgr8_to_nchw_f32_letterbox_single(
+        const ImageBgr8 &src, const PreprocessSpec &spec, const LetterboxMeta &meta,
+        float pad_value)
+    {
+        std::vector<float> output(tensor_element_count(spec), 0.0f);
+        preprocess_bgr8_to_nchw_f32_letterbox(src, spec, meta, pad_value, output.data(),
+                                              output.size());
+        return output;
     }
 
     void preprocess_bgr8_to_nchw_f32(const ImageBgr8 &src, const PreprocessSpec &spec, float *dst, 

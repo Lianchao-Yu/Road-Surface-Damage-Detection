@@ -4,6 +4,7 @@ find_package(OpenCV QUIET)
 add_executable(rd_tests
     test_environment.cpp
     test_preprocess_cpu.cpp
+    test_letterbox.cpp
 )
 
 if(OpenCV_FOUND)
@@ -30,7 +31,7 @@ if(TARGET rd_cuda)
 endif()
 
 if(TARGET rd_trt)
-    target_sources(rd_tests PRIVATE test_tensorrt_backend.cpp)
+    target_sources(rd_tests PRIVATE test_tensorrt_backend.cpp test_postprocess_cpu.cpp)
     target_link_libraries(rd_tests PRIVATE rd_trt)
 endif()
 

@@ -95,6 +95,7 @@ if(RD_ENABLE_TENSORRT)
     add_library(rd_trt
         src/showinfo/trt_info.cpp
         src/inference/tensorrt_backend.cpp
+        src/cpu/postprocess_cpu.cpp
     )
     target_include_directories(rd_trt PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(rd_trt PUBLIC

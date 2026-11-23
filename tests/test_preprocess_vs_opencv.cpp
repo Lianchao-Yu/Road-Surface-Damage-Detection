@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "road_damage/preprocess.hpp"
+#include "road_damage/preprocess_cpu.hpp"
 
 namespace {
 
@@ -61,7 +61,7 @@ TEST(PreprocessCpuOpenCv, MatchesCvResizeAndColorConversion) {
         spec.dst_width = test.dst_width;
         spec.dst_height = test.dst_height;
         const rd::ImageBgr8 view{bgr.data, bgr.cols, bgr.rows, static_cast<int>(bgr.step)};
-        const std::vector<float> actual = rd::preprocess_bgr8_to_nchw_f32(view, spec);
+        const std::vector<float> actual = rd::preprocess_bgr8_to_nchw_f32_single(view, spec);
         const std::size_t plane =
             static_cast<std::size_t>(test.dst_width) * static_cast<std::size_t>(test.dst_height);
 

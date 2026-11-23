@@ -71,7 +71,11 @@ TEST(TensorRTBackend, DynamicBatch) {
         EXPECT_EQ(result.dims.d[0], batch);
         EXPECT_EQ(result.dims.d[1], kOutputChannels);
         EXPECT_EQ(result.dims.d[2], kAnchors);
-        EXPECT_TRUE(std::isfinite(output.front()));
-        EXPECT_NE(output.front(), 0.0f);
+        // TensorInfer returns its internal host buffer through result.data;
+        // the caller-provided output vector is not written by this API.
+        ASSERT_NE(result.data, nullptr);
+        const float* result_data = static_cast<const float*>(result.data);
+        EXPECT_TRUE(std::isfinite(result_data[0]));
+        EXPECT_NE(result_data[0], 0.0f);
     }
 }

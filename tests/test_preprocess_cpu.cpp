@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "road_damage/preprocess.hpp"
+#include "road_damage/preprocess_cpu.hpp"
 
 namespace {
 
@@ -41,7 +41,7 @@ TEST(PreprocessCpu, IdentityResizeSwapsBgrToRgb) {
     const rd::ImageBgr8 image{pixels.data(), 2, 2, 6};
     const rd::PreprocessSpec spec = make_spec(2, 2);
 
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 12u);
 
     // Planes: R (source channel 2), G (1), B (0).
@@ -64,7 +64,7 @@ TEST(PreprocessCpu, BilinearVerticalHalfPixel) {
     const rd::ImageBgr8 image{pixels.data(), 2, 2, 6};
     const rd::PreprocessSpec spec = make_spec(2, 4);
 
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 24u);
 
     const float expected[4] = {0.0f, 25.0f, 75.0f, 100.0f};
@@ -81,7 +81,7 @@ TEST(PreprocessCpu, BilinearHorizontalNonIntegerScale) {
     const rd::ImageBgr8 image{pixels.data(), 3, 1, 9};
     const rd::PreprocessSpec spec = make_spec(2, 1);
 
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 6u);
     EXPECT_NEAR(out[0], 25.0f * kInv255, 1e-6f);
     EXPECT_NEAR(out[1], 175.0f * kInv255, 1e-6f);
@@ -98,7 +98,7 @@ TEST(PreprocessCpu, NormalizationUsesPerChannelRgbOrder) {
     spec.norm.std[1] = 0.5f;
     spec.norm.std[2] = 0.5f;
 
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 3u);
     EXPECT_NEAR(out[0], (10.0f * kInv255 - 0.1f) / 0.5f, 1e-6f);
     EXPECT_NEAR(out[1], (20.0f * kInv255 - 0.2f) / 0.5f, 1e-6f);
@@ -128,7 +128,7 @@ TEST(PreprocessCpu, MatchesPyTorchBilinearGolden) {
     spec.norm.std[2] = 0.5f;
 
     const rd::ImageBgr8 image{pixels.data(), kWidth, kHeight, kWidth * 3};
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
 
     const float expected[18] = {
         0.40000004f, 0.67450982f, 0.94901961f, 1.04313731f, 0.31372553f, 0.58823532f,
@@ -153,7 +153,7 @@ TEST(PreprocessCpu, KeepsBgrOrderWhenRequested) {
     spec.norm.std[1] = 0.5f;
     spec.norm.std[2] = 0.5f;
 
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 3u);
     EXPECT_NEAR(out[0], (30.0f * kInv255 - 0.1f) / 0.5f, 1e-6f);
     EXPECT_NEAR(out[1], (20.0f * kInv255 - 0.2f) / 0.5f, 1e-6f);
@@ -179,9 +179,9 @@ TEST(PreprocessCpu, StridePaddingIsIgnored) {
 
     const rd::PreprocessSpec spec = make_spec(2, 2);
     const std::vector<float> packed_out =
-        rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{packed.data(), 2, 2, 6}, spec);
+        rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{packed.data(), 2, 2, 6}, spec);
     const std::vector<float> padded_out =
-        rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{padded.data(), 2, 2, 8}, spec);
+        rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{padded.data(), 2, 2, 8}, spec);
 
     ASSERT_EQ(packed_out.size(), padded_out.size());
     for (std::size_t i = 0; i < packed_out.size(); ++i) {
@@ -205,7 +205,7 @@ TEST(PreprocessCpu, OddSizesKeepEdgePixels) {
 
     const rd::ImageBgr8 image{pixels.data(), kWidth, kHeight, kWidth * 3};
     const rd::PreprocessSpec spec = make_spec(7, 10);
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
 
     ASSERT_EQ(out.size(), 3u * 7u * 10u);
     for (float value : out) {
@@ -229,7 +229,7 @@ TEST(PreprocessCpu, OneByOneImage) {
     const std::vector<std::uint8_t> pixels = {7, 8, 9};
     const rd::ImageBgr8 image{pixels.data(), 1, 1, 3};
     const rd::PreprocessSpec spec = make_spec(1, 1);
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
     ASSERT_EQ(out.size(), 3u);
     EXPECT_NEAR(out[0], 9.0f * kInv255, 1e-6f);
     EXPECT_NEAR(out[1], 8.0f * kInv255, 1e-6f);
@@ -238,19 +238,19 @@ TEST(PreprocessCpu, OneByOneImage) {
 
 TEST(PreprocessCpu, RejectsMalformedInput) {
     const std::vector<std::uint8_t> pixels = {0, 0, 0};
-    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{nullptr, 1, 1, 3}, make_spec(1, 1)),
+    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{nullptr, 1, 1, 3}, make_spec(1, 1)),
                  std::invalid_argument);
-    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{pixels.data(), 1, 1, 2}, make_spec(1, 1)),
+    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{pixels.data(), 1, 1, 2}, make_spec(1, 1)),
                  std::invalid_argument);
-    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{pixels.data(), 0, 1, 3}, make_spec(1, 1)),
+    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{pixels.data(), 0, 1, 3}, make_spec(1, 1)),
                  std::invalid_argument);
 
     rd::PreprocessSpec zero_dst = make_spec(0, 1);
-    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{pixels.data(), 1, 1, 3}, zero_dst),
+    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{pixels.data(), 1, 1, 3}, zero_dst),
                  std::invalid_argument);
 
     rd::PreprocessSpec zero_std = make_spec(1, 1);
     zero_std.norm.std[1] = 0.0f;
-    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32(rd::ImageBgr8{pixels.data(), 1, 1, 3}, zero_std),
+    EXPECT_THROW(rd::preprocess_bgr8_to_nchw_f32_single(rd::ImageBgr8{pixels.data(), 1, 1, 3}, zero_std),
                  std::invalid_argument);
 }

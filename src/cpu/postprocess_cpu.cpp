@@ -1,4 +1,3 @@
-#pragma once
 #include "road_damage/postprocess_cpu.hpp"
 #include <algorithm>
 namespace postprocessing
@@ -32,11 +31,11 @@ namespace postprocessing
             result.reserve(proposal.size());
             std::vector<bool> suppression(proposal.size(), false);  //save suppression status
             
-            for(int i = 0; i< proposal.size(); i++)
+            for(std::size_t i = 0; i < proposal.size(); i++)
             {
                 if(suppression[i]) continue;
                 result.push_back(proposal[i]); //Add the un-suppressed box
-                for(int j=i+1; j<proposal.size(); j++)
+                for(std::size_t j=i+1; j<proposal.size(); j++)
                 {
                     if(suppression[j]) continue;
                     if(proposal[i].classID != proposal[j].classID) continue;
@@ -66,9 +65,10 @@ namespace postprocessing
             return result;
         }
 
-        
-        std::vector<Detection> PostProcessing_yolo(std::unordered_map<std::string, trt::TensorView> OutputView, const LetterboxMeta &letterbox,
-                                                   float confThreshold = 0.25f, float iouThreshold = 0.45f)
+    } // unnamed namespace (IoU / NMS helpers)
+
+    std::vector<Detection> PostProcessing_yolo(std::unordered_map<std::string, trt::TensorView> OutputView, const LetterboxMeta &letterbox,
+                                                   float confThreshold, float iouThreshold)
         {
             // ============== step 1: Filtering out the redundant bounding box =================
 
@@ -86,8 +86,8 @@ namespace postprocessing
             }
 
             // Get yolo's layout: [1, 4 + numClasses, numAnchors]
-            const size_t numClasses = static_cast<int>(view.dims.d[1]) - 4;
-            const size_t numAnchors = static_cast<int>(view.dims.d[2]);
+            const int numClasses = static_cast<int>(view.dims.d[1]) - 4;
+            const int numAnchors = static_cast<int>(view.dims.d[2]);
             if (numClasses <= 0 || numAnchors <= 0 || letterbox.scale <= 0.0f)
             {
                 return {};
@@ -141,6 +141,6 @@ namespace postprocessing
             }
             // ============== step 2: Calculate IoU and remove overlapping box in a same class(NMS) =================
             return NMS(proposals, iouThreshold);
-        }
     }
-};
+
+} // namespace postprocessing

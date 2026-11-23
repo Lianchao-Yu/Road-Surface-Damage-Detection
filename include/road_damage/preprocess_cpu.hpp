@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "road_damage/shared_data.hpp"
+
 namespace rd {
 
 /// BGR8 host image. `stride` is the number of bytes between rows and may be
@@ -32,6 +34,27 @@ struct PreprocessSpec {
 
 /// Number of float elements produced by `spec` (3 * H * W).
 std::size_t tensor_element_count(const PreprocessSpec& spec);
+
+/// Compute the letterbox scale and padding for `src` -> `spec` destination.
+/// The image is resized to (new_w, new_h) with scale = min(dst/src), then
+/// centered on a dst canvas with `pad_value` pixels.
+LetterboxMeta compute_letterbox_meta(const ImageBgr8& src, const PreprocessSpec& spec);
+
+/// Letterbox preprocessing: resize with preserved aspect ratio, pad the
+/// remaining area with `pad_value` (default 114, matching Ultralytics), then
+/// apply BGR->RGB, normalization and NCHW layout. `meta` must be the result
+/// of compute_letterbox_meta for the same src/spec.
+void preprocess_bgr8_to_nchw_f32_letterbox(const ImageBgr8& src,
+                                           const PreprocessSpec& spec,
+                                           const LetterboxMeta& meta,
+                                           float pad_value,
+                                           float* dst,
+                                           std::size_t dst_size);
+
+/// Convenience wrapper for a single letterboxed image.
+std::vector<float> preprocess_bgr8_to_nchw_f32_letterbox_single(
+    const ImageBgr8& src, const PreprocessSpec& spec,
+    const LetterboxMeta& meta, float pad_value = 114.0f);
 
 /// Run the reference preprocessing pipeline.
 /// Throws std::invalid_argument on malformed input (null data, non-positive

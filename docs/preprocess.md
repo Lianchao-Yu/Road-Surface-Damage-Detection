@@ -2,9 +2,9 @@
 
 实现位置：
 
-- 接口与契约：`include/road_damage/preprocess.hpp`
+- 接口与契约：`include/road_damage/preprocess_cpu.hpp`
 - 参考实现：`src/cpu/preprocess_cpu.cpp`
-- 测试：`tests/test_preprocess_cpu.cpp`
+- 测试：`tests/test_preprocess_cpu.cpp`、`tests/test_letterbox.cpp`
 
 ## 1. 作用
 
@@ -15,7 +15,9 @@ CPU 参考实现是后续 CUDA K1、NPP baseline 和 TensorRT 输入的**数值�
 3. Normalize
 4. NCHW 排布（FP32）
 
-**不在 M1 范围**：ROI/Tiling、Letterbox padding、FP16 转换、NMS。这些由 K1 和检测后处理负责，但重叠部分必须与本实现一致。
+**不在 M1 范围**：ROI/Tiling、FP16 转换、NMS。Letterbox 由单独的
+`preprocess_bgr8_to_nchw_f32_letterbox()` 提供；直接 resize 路径仍保留给
+RT-DETR 等使用直接拉伸的模型。
 
 ## 2. 坐标规范（最重要）
 
@@ -56,7 +58,10 @@ v = (pixel / 255 - mean[c]) / std[c]
 index = c * H * W + y * W + x      // N = 1, C = 3, FP32
 ```
 
-输出由 `preprocess_bgr8_to_nchw_f32()` 返回 `std::vector<float>`，大小可用 `tensor_element_count(spec)` 获取。
+输出由 `preprocess_bgr8_to_nchw_f32_single()` 或
+`preprocess_bgr8_to_nchw_f32_letterbox_single()` 返回 `std::vector<float>`，
+大小可用 `tensor_element_count(spec)` 获取。Letterbox 的 `scale`、
+`padX`、`padY` 由 `compute_letterbox_meta()` 计算，并交给后处理做坐标逆映射。
 
 ## 5. 校验结果
 
