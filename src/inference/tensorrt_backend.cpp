@@ -13,6 +13,7 @@ work flow:
 */
 #include "road_damage/tensorrt_backend.hpp"
 #include <cuda_runtime_api.h>
+#include <algorithm>
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -506,6 +507,28 @@ namespace trt
       return cudaStreamSynchronize(pImpl->stream) == cudaSuccess;
    }
 
+   cudaStream_t TensorRTBackend::getStream() const
+   {
+      return (pImpl != nullptr) ? pImpl->stream : nullptr;
+   }
+
+   void *TensorRTBackend::getInputBuffer(const std::string &name) const
+   {
+      if (pImpl == nullptr)
+         return nullptr;
+
+      // Only expose actual input tensors; returning an output buffer here
+      // would silently allow preprocessing to overwrite inference results.
+      if (std::find(pImpl->inputTensorsNames.begin(), pImpl->inputTensorsNames.end(),
+                    name) == pImpl->inputTensorsNames.end())
+      {
+         return nullptr;
+      }
+
+      const auto it = pImpl->deviceBuffers.find(name);
+      return (it != pImpl->deviceBuffers.end()) ? it->second : nullptr;
+   }
+
    // Reset resource
    void TensorRTBackend::resetResources()
    {
@@ -533,6 +556,17 @@ namespace trt
          }
       }
 
+      // Output host buffers are allocated with cudaMallocHost() and must be
+      // released with cudaFreeHost(); plain cudaFree() is not valid for pinned
+      // host memory and previously leaked these allocations.
+      for (auto &kv : pImpl->hostBuffers)
+      {
+         if (kv.second != nullptr)
+         {
+            cudaFreeHost(kv.second);
+         }
+      }
+
       // release vector and map resource
       if (pImpl->inputTensorsNames.size() != 0)
          pImpl->inputTensorsNames.clear();
@@ -542,6 +576,8 @@ namespace trt
          pImpl->bufferSizes.clear();
       if (pImpl->deviceBuffers.size() != 0)
          pImpl->deviceBuffers.clear();
+      if (pImpl->hostBuffers.size() != 0)
+         pImpl->hostBuffers.clear();
 
       // release stream
       if (pImpl->stream != nullptr)
