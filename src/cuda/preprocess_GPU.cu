@@ -6,7 +6,6 @@
 
 只需在 Kernel 参数中增加一个 int src_stride_bytes（默认等于 origWidth * 3），
 把原图寻址从 (y0 * meta.origWidth + x0) * 3 改为 y0 * src_stride_bytes + x0 * 3。
-
 改动只有一行，却能直接打通 FFmpeg 硬件解码帧（AVFrame->linesize[0] 往往为了 32/64 字节内存对齐而大于 width * 3）和 OpenCV 裁剪子图，
 避免额外做一次 CPU 内存拷贝来消除 padding。
 
@@ -110,7 +109,8 @@ namespace fused_k1
         const uint8_t *d_src,
         float *d_dst,
         LetterboxMeta meta,
-        cudaStream_t stream)
+        cudaStream_t stream,
+        size_t src_stride)
     {
         // 1. Basic parameters and null pointer check
         if (d_src == nullptr || d_dst == nullptr)
@@ -125,6 +125,15 @@ namespace fused_k1
             return false;
         }
 
+        // If the "stride" is not provided (set to 0), calculate the stride according to the compact BGR8
+        //else, check the value of stride which must larger than 
+        const size_t min_stride = static_cast<size_t>(meta.origWidth) * 3; //The value in each color channel is 1 byte size
+        const size_t actual_stride = (src_stride == 0) ? min_stride : src_stride;
+        if (actual_stride < min_stride)
+        {
+            return false;
+        }
+
         // 2. Launch kernal
         const dim3 block(16, 16);
         const dim3 grid((meta.inputWidth + block.x - 1) / block.x,
@@ -134,7 +143,8 @@ namespace fused_k1
             d_src,
             d_dst,
             meta,
-            pad_value);
+            pad_value,
+            actual_stride);
 
         // 3. Check whether the Kernel startup parameters or configuration are legal
         cudaError_t err = cudaGetLastError();
