@@ -167,6 +167,24 @@ if(RD_ENABLE_TENSORRT)
 endif()
 rd_set_warnings(road_damage)
 
+# Video inference app: needs FFmpeg input, CUDA preprocess, TensorRT and
+# OpenCV drawing/encoding. Skipped automatically if a component is missing.
+if(TARGET rd_io AND TARGET rd_cuda AND TARGET rd_trt AND OpenCV_FOUND)
+    add_executable(road_damage_video src/app/video_main.cpp)
+    target_include_directories(road_damage_video PRIVATE ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(road_damage_video PRIVATE
+        rd_core
+        rd_io
+        rd_cuda
+        rd_trt
+        ${OpenCV_LIBS}
+    )
+    rd_set_warnings(road_damage_video)
+    message(STATUS "road_damage_video: enabled")
+else()
+    message(STATUS "road_damage_video: skipped (FFmpeg/CUDA/TensorRT/OpenCV unavailable)")
+endif()
+
 # ---------------------------------------------------------------------------
 # Tests / benchmarks
 # ---------------------------------------------------------------------------

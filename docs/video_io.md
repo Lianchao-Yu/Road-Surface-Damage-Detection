@@ -98,3 +98,74 @@ FFmpegVideoSource
 → Buffer Pool + 异步 Pipeline
 → RTSP 超时与重连
 ```
+
+## 7. 视频推理闭环（road_damage_video）
+
+`src/app/video_main.cpp` 已串起完整链路：
+
+```text
+FFmpegVideoSource::read(BGR24)
+→ cudaMemcpyAsync(frame.stride * frame.height)
+→ launchFusedPreprocess(..., frame.stride)
+→ TensorInfer
+→ PostProcessing_yolo
+→ 画框 / 写 MP4
+```
+
+关键资源路径：
+
+- H2D、preprocess 和 TensorRT 全部使用 `TensorRTBackend::getStream()`
+- preprocess 直接写入 `TensorRTBackend::getInputBuffer("images")`
+- 只对原始 BGR 帧分配一次 staging device buffer
+- 不再为 640×640 输入张量重复 `cudaMalloc`
+- `resetResources()` 现在会 `cudaFreeHost()` 释放 pinned 输出 buffer
+
+运行：
+
+```bash
+# 纯推理基线，不编码输出视频
+./build/cuda-trt/road_damage_video \
+  --video dataset/testVideo/test1.mp4 --warmup 10 --no-write
+
+# 输出标注视频
+./build/cuda-trt/road_damage_video \
+  --video dataset/testVideo/test1.mp4 --warmup 5 \
+  --out /tmp/test1_pred.mp4
+```
+
+### 7.1 分阶段基线
+
+测试视频 `dataset/testVideo/test1.mp4`，H.264，29 fps，5.41 s，157 帧，
+warmup 10 帧，统计 147 帧中位数：
+
+| 分辨率 | decode | H2D+preprocess | infer | post | draw | total/frame | FPS |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 720×1280（原始） | 0.55 ms | 0.54 ms | 3.91 ms | 0.05 ms | 0.61 ms | 5.93 ms | 150.8 |
+| 1280×720 | 0.53 ms | 0.41 ms | 3.67 ms | 0.05 ms | 0.49 ms | 5.32 ms | 172.3 |
+| 1920×1080 | 1.06 ms | 0.99 ms | 3.82 ms | 0.04 ms | 0.96 ms | 7.09 ms | 136.0 |
+
+开启输出视频编码时（720×1280，152 帧统计）：
+
+```text
+encode     : median 6.34 ms
+total/frame: median 13.02 ms
+throughput : 75.2 fps
+```
+
+输出文件已验证：
+
+```text
+codec=mpeg4, 720x1280, 29 fps, 157 frames
+```
+
+### 7.2 正确性抽查
+
+视频第 0 帧与抽帧后单图 `yolo_infer --gpu-preprocess` 对比：
+
+```text
+video      : D20 score=0.374227 box=[55.7534, 1046.78, 709.88, 1279.61]
+yolo_infer : D20 score=0.374227 box=[55.7534, 1046.78, 709.88, 1279.61]
+```
+
+逐位一致，说明 video decode → BGR → GPU preprocess → TensorRT → postprocess
+与单图路径一致。

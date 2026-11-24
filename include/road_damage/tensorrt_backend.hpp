@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_map>
 #include <NvInfer.h>
+#include <cuda_runtime_api.h>
 #include <vector>
 namespace trt
 {
@@ -37,6 +38,19 @@ namespace trt
         // bool Tensor_Infer(const std::vector<float> &hostInput, std::vector<float> &hostOutput); //function to conduct infer
         void resetResources();
         bool TensorInfer(const std::unordered_map<std::string, TensorView> &input, std::unordered_map<std::string, TensorView> &output); 
+
+        // CUDA stream owned by the backend. External GPU preprocessing must
+        // enqueue H2D / kernels on this stream so that TensorInfer() sees the
+        // preprocessed tensor in stream order without an extra synchronization.
+        // Returns nullptr before TensorRTLoader() succeeds.
+        cudaStream_t getStream() const;
+
+        // Device buffer preallocated by TensorRTLoader() for an input tensor.
+        // It is sized for the engine's maximum profile shape. Writing the
+        // preprocessed tensor directly into this buffer avoids a second
+        // cudaMalloc and lets TensorInfer() consume it with MemoryType::kGPU.
+        // Returns nullptr for unknown/non-input names or before loading.
+        void *getInputBuffer(const std::string &name) const;
     private:
         struct Impl;  // forward declaration of implementation class
         std::unique_ptr<Impl> pImpl; // pointer to implementation

@@ -31,6 +31,13 @@ TEST(TensorRTBackend, DynamicBatch) {
     trt::TensorRTBackend backend;
     ASSERT_TRUE(backend.TensorRTLoader(engine_path()));
 
+    // The video pipeline reuses these handles to enqueue preprocessing on the
+    // inference stream and write directly into the engine input buffer.
+    EXPECT_NE(backend.getStream(), nullptr);
+    EXPECT_NE(backend.getInputBuffer("images"), nullptr);
+    EXPECT_EQ(backend.getInputBuffer("output0"), nullptr);
+    EXPECT_EQ(backend.getInputBuffer("missing"), nullptr);
+
     constexpr int kChannels = 3;
     constexpr int kSize = 640;
     constexpr int kOutputChannels = 8;
