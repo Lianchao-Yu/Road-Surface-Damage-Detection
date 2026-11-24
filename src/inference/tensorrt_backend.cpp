@@ -183,7 +183,7 @@ namespace trt
             }
          }
 
-         // 2. assign maximum memory(如果为动态维度，则查询支持的输入维度)
+         // 2. assign maximum memory(如果为动态维度，则查询支持的输入维度并设置最大维度)
          if (hasDynamicDim)
          {
             dims = pImpl->engine->getProfileShape(name.c_str(), 0, nvinfer1::OptProfileSelector::kMAX); // Set the maximum supported size of dimention
@@ -208,6 +208,7 @@ namespace trt
             tensorVolume *= static_cast<size_t>(dims.d[j]); // get the tensor volume
          }
 
+         //Get the typeSize, and calculate size based on different levels of precision
          auto typeSize = (dataType == nvinfer1::DataType::kFLOAT) ? sizeof(float) : (dataType == nvinfer1::DataType::kHALF) ? 2
                                                                                 : (dataType == nvinfer1::DataType::kINT8)   ? sizeof(int8_t)
                                                                                 : (dataType == nvinfer1::DataType::kINT32)  ? sizeof(int32_t)
@@ -479,7 +480,7 @@ namespace trt
          // copy back to GPU
          else if (OutputView.memType == MemoryType::kGPU) 
          {
-            //Case B: GPU hanvn't maloc memory 
+            //Case B: GPU hanvn't malloc memory 
             if (OutputView.data == nullptr)
             {
                OutputView.data = pImpl->deviceBuffers[name];

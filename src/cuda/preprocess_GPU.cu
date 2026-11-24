@@ -53,9 +53,10 @@ namespace fused_k1
         const float scale_x = static_cast<float>(meta.origWidth) / static_cast<float>(resized_w);
         const float scale_y = static_cast<float>(meta.origHeight) / static_cast<float>(resized_h);
 
-        // YOLO contract: packed BGR8, pad value 114, mean=0, std=1.
-        // The current kernel does not apply per-channel mean/std and does
-        // not support a source row stride (FFmpeg linesize).
+        // YOLO contract: BGR8 with an explicit source row stride, pad value
+        // 114, mean=0 and std=1. The source rows are addressed with
+        // src_stride, so FFmpeg linesize / OpenCV ROI padding is supported.
+        // Per-channel mean/std are still not applied by this kernel.
         float value_c[3];
         if (x < pad_x || x >= resized_w + pad_x ||
             y < pad_y || y >= resized_h + pad_y)

@@ -14,6 +14,7 @@ option(RD_ENABLE_TENSORRT "Build TensorRT inference components" ON)
 option(RD_BUILD_TESTS "Build unit tests" ON)
 option(RD_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(RD_BUILD_TOOLS "Build command-line tools" ON)
+option(RD_ENABLE_VIDEO "Build FFmpeg video I/O components" ON)
 option(RD_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
 if(RD_ENABLE_TENSORRT AND NOT RD_ENABLE_CUDA)
@@ -73,6 +74,51 @@ target_include_directories(rd_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(rd_core PUBLIC cxx_std_17)
 target_compile_definitions(rd_core PUBLIC RD_VERSION="${PROJECT_VERSION}")
 rd_set_warnings(rd_core)
+
+# ---------------------------------------------------------------------------
+# rd_cv: optional OpenCV-based CPU comparison implementation.
+# Kept as a separate target so rd_core remains usable without OpenCV.
+# ---------------------------------------------------------------------------
+find_package(OpenCV QUIET)
+if(OpenCV_FOUND)
+    add_library(rd_cv
+        src/cpu/preprocess_cv.cpp
+    )
+    target_include_directories(rd_cv PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        ${OpenCV_INCLUDE_DIRS}
+    )
+    target_link_libraries(rd_cv PUBLIC rd_core ${OpenCV_LIBS})
+    target_compile_definitions(rd_cv PUBLIC RD_WITH_OPENCV=1)
+    rd_set_warnings(rd_cv)
+    message(STATUS "  OpenCV    : ${OpenCV_VERSION} (rd_cv enabled)")
+else()
+    message(STATUS "  OpenCV    : not found (rd_cv disabled)")
+endif()
+
+# ---------------------------------------------------------------------------
+# rd_io: optional FFmpeg video input (demux + software decode + swscale).
+# Kept separate from rd_core so the inference core has no FFmpeg dependency.
+# ---------------------------------------------------------------------------
+if(RD_ENABLE_VIDEO)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(FFMPEG QUIET IMPORTED_TARGET
+            libavformat libavcodec libavutil libswscale)
+    endif()
+    if(FFMPEG_FOUND)
+        add_library(rd_io
+            src/io/ffmpeg_video_source.cpp
+        )
+        target_include_directories(rd_io PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+        target_link_libraries(rd_io PUBLIC PkgConfig::FFMPEG)
+        target_compile_definitions(rd_io PUBLIC RD_WITH_FFMPEG=1)
+        rd_set_warnings(rd_io)
+        message(STATUS "  FFmpeg    : found (rd_io enabled)")
+    else()
+        message(STATUS "  FFmpeg    : not found (rd_io disabled)")
+    endif()
+endif()
 
 # ---------------------------------------------------------------------------
 # rd_cuda: CUDA kernels and GPU runtime helpers

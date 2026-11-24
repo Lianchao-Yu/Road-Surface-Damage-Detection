@@ -11,6 +11,7 @@ bool launchFusedPreprocess(
     const uint8_t* d_src,
     float* d_dst,
     LetterboxMeta meta,
-    cudaStream_t stream
+    cudaStream_t stream,
+    size_t src_stride
 );
 }
