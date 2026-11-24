@@ -26,11 +26,14 @@
 namespace fused_k1
 {
     //============= This kernal is designed for YOLO ===========
+    //stride: 由于需要进行内存对齐， 图像行之间存在填充字节(padding byte)
+    //因此: stride = width * byte + padding byte (内存排布：[1, 2, 3, .... width-1, padding, ...])
     __global__ void preprocess_Kernal(
         const uint8_t *d_src,
         float *d_dst,
         LetterboxMeta meta,
-        uint8_t pad_value)
+        uint8_t pad_value,
+        int src_stride)
     {
         int x = blockIdx.x * blockDim.x + threadIdx.x;
         int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -83,14 +86,17 @@ namespace fused_k1
 
             // bgr8 to NCHW
             float Norm = 1.0f / 255.0f;
-
+            const size_t offset_y0 = y0 * src_stride;
+            const size_t offset_y1 = y1 * src_stride;
+            const size_t offset_x0 = x0 * 3;
+            const size_t offset_x1 = x1 * 3;
             for (int c = 0; c < 3; c++)
             {
-                value_c[2 - c] =
-                    d_src[(y0 * meta.origWidth + x0) * 3 + c] * w00 * Norm +
-                    d_src[(y0 * meta.origWidth + x1) * 3 + c] * w01 * Norm +
-                    d_src[(y1 * meta.origWidth + x0) * 3 + c] * w10 * Norm +
-                    d_src[(y1 * meta.origWidth + x1) * 3 + c] * w11 * Norm;
+                value_c[2 - c] = 
+                    d_src[offset_y0 + offset_x0 + c] * w00 * Norm +
+                    d_src[offset_y0 + offset_x1 + c] * w01 * Norm +
+                    d_src[offset_y1 + offset_x0 + c] * w10 * Norm +
+                    d_src[offset_y1 + offset_x1 + c] * w11 * Norm;
             }
         }
         //output
