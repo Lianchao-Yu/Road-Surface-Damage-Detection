@@ -1,5 +1,4 @@
 #include "road_damage/preprocess_cpu.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -226,7 +225,7 @@ namespace rd
         return output;
     }
 
-    void preprocess_bgr8_to_nchw_f32(const ImageBgr8 &src, const PreprocessSpec &spec, float *dst, 
+    void preprocess_bgr8_to_nchw_f32_direct(const ImageBgr8 &src, const PreprocessSpec &spec, float *dst, 
                                                                             std::size_t dst_size)
     {
         validate(src, spec);
@@ -293,11 +292,11 @@ namespace rd
     }
 
     // Single batch, single input. 
-    std::vector<float> preprocess_bgr8_to_nchw_f32_single(const ImageBgr8 &src, const PreprocessSpec &spec)
+    std::vector<float> preprocess_bgr8_to_nchw_f32_direct_single(const ImageBgr8 &src, const PreprocessSpec &spec)
     {
         size_t tensor_size = tensor_element_count(spec);
         std::vector<float> output(tensor_size, 0.0f);
-        preprocess_bgr8_to_nchw_f32(src, spec, output.data(), tensor_size);
+        preprocess_bgr8_to_nchw_f32_direct(src, spec, output.data(), tensor_size);
         return output;
     }
 

@@ -58,8 +58,8 @@ v = (pixel / 255 - mean[c]) / std[c]
 index = c * H * W + y * W + x      // N = 1, C = 3, FP32
 ```
 
-输出由 `preprocess_bgr8_to_nchw_f32_single()` 或
-`preprocess_bgr8_to_nchw_f32_letterbox_single()` 返回 `std::vector<float>`，
+输出由 `preprocess_bgr8_to_nchw_f32_direct_single()`（RT-DETR）或
+`preprocess_bgr8_to_nchw_f32_letterbox_single()`（YOLO）返回 `std::vector<float>`，
 大小可用 `tensor_element_count(spec)` 获取。Letterbox 的 `scale`、
 `padX`、`padY` 由 `compute_letterbox_meta()` 计算，并交给后处理做坐标逆映射。
 

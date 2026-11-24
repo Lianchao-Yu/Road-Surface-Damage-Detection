@@ -80,6 +80,7 @@ rd_set_warnings(rd_core)
 if(RD_ENABLE_CUDA)
     add_library(rd_cuda
         src/showinfo/cuda_info.cu
+        src/cuda/preprocess_GPU.cu
     )
     target_include_directories(rd_cuda PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(rd_cuda PUBLIC CUDA::cudart)

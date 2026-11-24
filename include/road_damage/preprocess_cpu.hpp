@@ -35,15 +35,25 @@ struct PreprocessSpec {
 /// Number of float elements produced by `spec` (3 * H * W).
 std::size_t tensor_element_count(const PreprocessSpec& spec);
 
-/// Compute the letterbox scale and padding for `src` -> `spec` destination.
-/// The image is resized to (new_w, new_h) with scale = min(dst/src), then
-/// centered on a dst canvas with `pad_value` pixels.
+// ---------------------------------------------------------------------------
+// Direct resize path: RT-DETRv2 / models trained with a plain 640x640 resize.
+// No padding is added; the image is stretched to spec.dst_*.
+// ---------------------------------------------------------------------------
+std::vector<float> preprocess_bgr8_to_nchw_f32_direct_single(const ImageBgr8& src,
+                                                             const PreprocessSpec& spec);
+void preprocess_bgr8_to_nchw_f32_direct(const ImageBgr8& src, const PreprocessSpec& spec,
+                                        float* dst, std::size_t dst_size);
+
+// ---------------------------------------------------------------------------
+// Letterbox path: YOLO / models trained with aspect-preserving resize + padding.
+// Call order:
+//   1. meta = compute_letterbox_meta(src, spec)
+//   2. tensor = preprocess_bgr8_to_nchw_f32_letterbox_single(src, spec, meta, 114.0f)
+//   3. run inference
+//   4. PostProcessing_yolo(outputs, meta, ...)   // uses the same meta
+// ---------------------------------------------------------------------------
 LetterboxMeta compute_letterbox_meta(const ImageBgr8& src, const PreprocessSpec& spec);
 
-/// Letterbox preprocessing: resize with preserved aspect ratio, pad the
-/// remaining area with `pad_value` (default 114, matching Ultralytics), then
-/// apply BGR->RGB, normalization and NCHW layout. `meta` must be the result
-/// of compute_letterbox_meta for the same src/spec.
 void preprocess_bgr8_to_nchw_f32_letterbox(const ImageBgr8& src,
                                            const PreprocessSpec& spec,
                                            const LetterboxMeta& meta,
@@ -51,15 +61,8 @@ void preprocess_bgr8_to_nchw_f32_letterbox(const ImageBgr8& src,
                                            float* dst,
                                            std::size_t dst_size);
 
-/// Convenience wrapper for a single letterboxed image.
 std::vector<float> preprocess_bgr8_to_nchw_f32_letterbox_single(
     const ImageBgr8& src, const PreprocessSpec& spec,
     const LetterboxMeta& meta, float pad_value = 114.0f);
-
-/// Run the reference preprocessing pipeline.
-/// Throws std::invalid_argument on malformed input (null data, non-positive
-/// dimensions, stride smaller than width * 3, zero std).
-std::vector<float> preprocess_bgr8_to_nchw_f32_single(const ImageBgr8& src, const PreprocessSpec& spec);
-void preprocess_bgr8_to_nchw_f32(const ImageBgr8& src, const PreprocessSpec& spec, float* dst,  std::size_t dst_size);
 
 }  // namespace rd

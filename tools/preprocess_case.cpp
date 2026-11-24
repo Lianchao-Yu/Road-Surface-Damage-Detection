@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     }
 
     const rd::ImageBgr8 image{buffer.data(), width, height, stride};
-    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_single(image, spec);
+    const std::vector<float> out = rd::preprocess_bgr8_to_nchw_f32_direct_single(image, spec);
     for (float value : out) {
         std::printf("%.9g\n", value);
     }
