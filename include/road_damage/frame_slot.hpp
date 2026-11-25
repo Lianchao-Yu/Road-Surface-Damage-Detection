@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <opencv2/core/mat.hpp>
+#include <cuda_runtime.h>
 
 struct FrameSlot
 {
