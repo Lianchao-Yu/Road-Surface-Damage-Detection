@@ -37,13 +37,20 @@ namespace trt
         bool TensorRTLoader(const std::string &enginePath);           // function to load TensorRT engine from a serialized file
         // bool Tensor_Infer(const std::vector<float> &hostInput, std::vector<float> &hostOutput); //function to conduct infer
         void resetResources();
-        bool TensorInfer(const std::unordered_map<std::string, TensorView> &input, std::unordered_map<std::string, TensorView> &output); 
+        bool TensorInfer(const std::unordered_map<std::string, TensorView> &input, std::unordered_map<std::string, TensorView> &output);
+
+
 
         // CUDA stream owned by the backend. External GPU preprocessing must
         // enqueue H2D / kernels on this stream so that TensorInfer() sees the
         // preprocessed tensor in stream order without an extra synchronization.
         // Returns nullptr before TensorRTLoader() succeeds.
         cudaStream_t getStream() const;
+        
+        //return tensor name & shape
+        const std::vector<std::string> &getInputNames() const;
+        const std::vector<std::string> &getOutputNames() const;
+        nvinfer1::Dims getTensorShape(const std::string &name) const;
 
         // Device buffer preallocated by TensorRTLoader() for an input tensor.
         // It is sized for the engine's maximum profile shape. Writing the

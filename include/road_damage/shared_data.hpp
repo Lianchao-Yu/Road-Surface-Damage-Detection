@@ -46,3 +46,16 @@ struct PreprocessSpec {
     bool bgr_to_rgb = true;
     Normalization norm{};
 };
+
+
+//Help function: Construct the letterbox
+LetterboxMeta computeLetterboxMeta(int src_w, int src_h, int dst_w, int dst_h)
+{
+    LetterboxMeta m{};
+    m.scale = std::min(static_cast<float>(dst_w) / src_w, static_cast<float>(dst_h) / src_h);
+    m.inputWidth = static_cast<int>(std::round(src_w * m.scale));
+    m.origHeight = static_cast<int>(std::round(src_h * m.scale));
+    m.padX = (dst_w - m.inputWidth) / 2;
+    m.padY = (dst_h - m.inputHeight) / 2;
+    return m;
+}

@@ -10,12 +10,14 @@ class frame_Queue
 {
 public:
     explicit frame_Queue(size_t capacity_ = 4) : capacity(capacity_) {};
+    frame_Queue(const FrameQueue&) = delete;
+    frame_Queue& operator=(const frame_Queue&) = delete;
 
     bool push(T item)
     {
         std::unique_lock lock(mtx_); // LOCK
         not_full_cv_.wait(lock, [this]
-                          { return stopAll || queue_.size() < capacity });
+                          { return stopAll || queue_.size() < capacity; });
         if (stopAll == true)
             return false;
 
@@ -36,16 +38,16 @@ public:
         return true;
     }
 
-    bool stop()
+    void stop()
     {
         std::lock_guard<std::mutex> lock(mtx_);
-        stopped_ = true;
+        stopAll = true;
         not_empty_cv_.notify_all();
         not_full_cv_.notify_all();
     }
 
     private : size_t capacity;
-    bool stopAll;
+    bool stopAll = false;
     std::queue<T> queue_;
     std::mutex mtx_;
     std::condition_variable not_empty_cv_; // for consumer
