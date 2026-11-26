@@ -1,27 +1,44 @@
+#pragma once
+
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <opencv2/core/mat.hpp>
+
+#include <opencv2/core.hpp>
 #include <cuda_runtime.h>
 
+/// Per-frame context passed between the decoder, GPU worker and encoder.
+///
+/// The slot owns the pinned host frame and the device staging buffer. TensorRT
+/// input/output buffers are shared backend resources and intentionally not
+/// duplicated here for the phase-1 pipeline (one inference worker).
 struct FrameSlot
 {
     int id = 0;
-    int frame_idx = -1;
+    std::uint64_t frame_id = 0;
+    std::int64_t pts_us = 0;
+
     int width = 0;
     int height = 0;
-    size_t src_stride = 0; // For the synchronized step length, directly reuse what you just wrote
+    std::size_t src_stride = 0;
 
-    // 1. CPU Pinned Memory (页锁定内存)
-    uint8_t *h_bgr = nullptr;  // 解码后的原图存在这里
-    float *h_output = nullptr; // GPU 推理结果拷回这里 (大小很小，几百KB)
+    // Pinned host BGR24 frame, written by the decoder.
+    std::uint8_t* h_bgr = nullptr;
+    std::size_t h_bgr_capacity = 0;
 
-    // 2. 异步同步事件
-    cudaEvent_t gpu_done_event = nullptr;
+    // Device staging buffer for H2D / GPU preprocess input.
+    std::uint8_t* d_bgr = nullptr;
+    std::size_t d_bgr_capacity = 0;
 
-    // 辅助函数：把 Pinned Memory 零拷贝包装成 cv::Mat 给 OpenCV 画框用
+    // Stage timings in milliseconds.
+    double decode_ms = 0.0;
+    double infer_ms = 0.0;
+    double encode_ms = 0.0;
+    double e2e_ms = 0.0;
+    std::chrono::steady_clock::time_point start_time{};
+
     cv::Mat wrapAsMat() const
     {
         return cv::Mat(height, width, CV_8UC3, h_bgr, src_stride);
     }
 };
-

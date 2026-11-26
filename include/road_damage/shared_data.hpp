@@ -1,5 +1,9 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+
 //namespace rd{}  ,避免命名空间冲突
 struct LetterboxMeta
 {
@@ -49,13 +53,20 @@ struct PreprocessSpec {
 
 
 //Help function: Construct the letterbox
-LetterboxMeta computeLetterboxMeta(int src_w, int src_h, int dst_w, int dst_h)
+inline LetterboxMeta computeLetterboxMeta(int src_w, int src_h, int dst_w, int dst_h)
 {
     LetterboxMeta m{};
-    m.scale = std::min(static_cast<float>(dst_w) / src_w, static_cast<float>(dst_h) / src_h);
-    m.inputWidth = static_cast<int>(std::round(src_w * m.scale));
-    m.origHeight = static_cast<int>(std::round(src_h * m.scale));
-    m.padX = (dst_w - m.inputWidth) / 2;
-    m.padY = (dst_h - m.inputHeight) / 2;
+    m.origWidth = src_w;
+    m.origHeight = src_h;
+    m.inputWidth = dst_w;
+    m.inputHeight = dst_h;
+
+    m.scale = std::min(static_cast<float>(dst_w) / static_cast<float>(src_w),
+                       static_cast<float>(dst_h) / static_cast<float>(src_h));
+
+    const int resized_w = static_cast<int>(std::round(static_cast<float>(src_w) * m.scale));
+    const int resized_h = static_cast<int>(std::round(static_cast<float>(src_h) * m.scale));
+    m.padX = static_cast<float>((dst_w - resized_w) / 2);
+    m.padY = static_cast<float>((dst_h - resized_h) / 2);
     return m;
 }

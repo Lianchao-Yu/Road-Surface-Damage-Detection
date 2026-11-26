@@ -29,8 +29,15 @@ namespace rd::pipeline
         std::uint64_t inferred_frames = 0;
         std::uint64_t encoded_frames = 0;
         std::uint64_t dropped_frames = 0;
+        std::uint64_t total_detections = 0;
         double end_to_end_ms_p50 = 0.0;
         double end_to_end_ms_p95 = 0.0;
+        double decode_ms_p50 = 0.0;
+        double decode_ms_p95 = 0.0;
+        double infer_ms_p50 = 0.0;
+        double infer_ms_p95 = 0.0;
+        double encode_ms_p50 = 0.0;
+        double encode_ms_p95 = 0.0;
     };
     class AsyncPipeline
     {

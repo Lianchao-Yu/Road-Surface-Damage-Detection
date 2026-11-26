@@ -185,6 +185,33 @@ else()
     message(STATUS "road_damage_video: skipped (FFmpeg/CUDA/TensorRT/OpenCV unavailable)")
 endif()
 
+# Async video pipeline: stages are decoupled by bounded queues.
+if(TARGET rd_io AND TARGET rd_cuda AND TARGET rd_trt AND OpenCV_FOUND)
+    add_library(rd_pipeline
+        src/pipeline/async_pipeline.cpp
+    )
+    target_include_directories(rd_pipeline PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        ${OpenCV_INCLUDE_DIRS}
+    )
+    target_link_libraries(rd_pipeline PUBLIC
+        rd_core
+        rd_io
+        rd_cuda
+        rd_trt
+        ${OpenCV_LIBS}
+    )
+    target_compile_definitions(rd_pipeline PUBLIC RD_WITH_ASYNC_PIPELINE=1)
+    rd_set_warnings(rd_pipeline)
+
+    add_executable(road_damage_async src/app/async_video_main.cpp)
+    target_link_libraries(road_damage_async PRIVATE rd_pipeline)
+    rd_set_warnings(road_damage_async)
+    message(STATUS "road_damage_async: enabled")
+else()
+    message(STATUS "road_damage_async: skipped (FFmpeg/CUDA/TensorRT/OpenCV unavailable)")
+endif()
+
 # ---------------------------------------------------------------------------
 # Tests / benchmarks
 # ---------------------------------------------------------------------------

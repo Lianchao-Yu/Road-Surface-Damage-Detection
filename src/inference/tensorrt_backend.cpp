@@ -529,6 +529,30 @@ namespace trt
       return (it != pImpl->deviceBuffers.end()) ? it->second : nullptr;
    }
 
+   const std::vector<std::string> &TensorRTBackend::getInputNames() const
+   {
+      static const std::vector<std::string> empty;
+      return (pImpl != nullptr) ? pImpl->inputTensorsNames : empty;
+   }
+
+   const std::vector<std::string> &TensorRTBackend::getOutputNames() const
+   {
+      static const std::vector<std::string> empty;
+      return (pImpl != nullptr) ? pImpl->outputTensorsNames : empty;
+   }
+
+   nvinfer1::Dims TensorRTBackend::getTensorShape(const std::string &name) const
+   {
+      if (pImpl == nullptr || pImpl->engine == nullptr)
+      {
+         return nvinfer1::Dims{};
+      }
+
+      // Engine shape is enough for callers that need to provide an explicit
+      // batch dimension. Dynamic H/W tensors should use the engine profile.
+      return pImpl->engine->getTensorShape(name.c_str());
+   }
+
    // Reset resource
    void TensorRTBackend::resetResources()
    {
