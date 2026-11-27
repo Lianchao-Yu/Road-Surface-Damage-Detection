@@ -29,6 +29,22 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+/*
+A FrameSlot holds the per-frame buffers and metadata. A fixed pool is seeded
+into free_queue. Each stage takes a slot from one queue and passes it to the
+next shared queue, so only one worker uses a slot at a time.
+
+FrameQueue wraps std::queue with a mutex and condition variables. Push/pop are
+thread-safe, and producers block when the queue is full.
+
+decode:      free_queue -> fill h_bgr -> infer_queue
+GPU worker:  H2D -> preprocess -> infer -> postprocess -> encode_queue
+encode:      write output -> free_queue
+
+TensorRT input/output buffers are backend-owned and reused.
+*/
+
+
 
 namespace rd::pipeline {
 namespace {
