@@ -110,7 +110,8 @@ int main(int argc, char** argv) {
               << " ms, infer p50=" << stats.infer_ms_p50
               << " ms, encode p50=" << stats.encode_ms_p50 << " ms\n";
     if (wall_s > 0.0) {
-        std::cout << "throughput : " << (stats.encoded_frames / wall_s) << " fps\n";
+        std::cout << "wall-clock : " << (stats.encoded_frames / wall_s)
+                  << " fps (all frames, after init)\n";
     }
     if (options.config.write_video) {
         std::cout << "output     : " << options.config.output_path << "\n";

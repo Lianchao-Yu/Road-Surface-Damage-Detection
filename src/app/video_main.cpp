@@ -340,6 +340,10 @@ int main(int argc, char** argv) {
     bool stop_requested = false;
     bool failed = false;
 
+    // Wall-clock timer for a fair comparison with the async pipeline. It starts
+    // after the engine/source are initialized and includes warmup frames.
+    const auto wall_start = std::chrono::steady_clock::now();
+
     for (;;) {
         if (options.max_frames > 0 && total_frames >= options.max_frames) {
             break;
@@ -514,6 +518,10 @@ int main(int argc, char** argv) {
         }
     }
 
+    const auto wall_end = std::chrono::steady_clock::now();
+    const double wall_s =
+        std::chrono::duration<double>(wall_end - wall_start).count();
+
     source.close();
     if (writer_ready) {
         writer.release();
@@ -550,6 +558,10 @@ int main(int argc, char** argv) {
         }
         const double fps = 1000.0 * static_cast<double>(samples.total.size()) / sum;
         std::cout << "throughput : " << fps << " fps (measured frames)\n";
+        if (wall_s > 0.0) {
+            std::cout << "wall-clock : " << (total_frames / wall_s)
+                      << " fps (all frames, after init)\n";
+        }
     }
     if (writer_enabled && writer_ready) {
         std::cout << "output     : " << out_path << "\n";
