@@ -1,0 +1,197 @@
+
+NOTICE: Existing SQLite export found: /tmp/opencode/async_nsys_2026_5_1.sqlite
+        It is assumed file was previously exported from: /tmp/opencode/async_nsys_2026_5_1.nsys-rep
+        Consider using --force-export=true if needed.
+
+Processing [/tmp/opencode/async_nsys_2026_5_1.sqlite] with [/tmp/opencode/nsight-2026.5.1/opt/nvidia/nsight-systems/2026.5.1/target-linux-x64/reports/cuda_gpu_kern_sum.py]... 
+
+ ** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
+
++----------+-----------------+-----------+----------+----------+----------+----------+-------------+------------------------------------------------------------------------------------------------------+
+| Time (%) | Total Time (ns) | Instances | Avg (ns) | Med (ns) | Min (ns) | Max (ns) | StdDev (ns) |                                                 Name                                                 |
++----------+-----------------+-----------+----------+----------+----------+----------+-------------+------------------------------------------------------------------------------------------------------+
+|     16.3 |        17551131 |       700 |  25073.0 |  17024.0 |    16223 |    53279 |     14027.0 | sm80_xmma_fprop_wngd_f32f32_f32_f32_nchwkcrs_nchw_tilesize8x16x64x8_warpsize8x1x1_wngd2x2_execute_k… |
+|     12.1 |        13054379 |       150 |  87029.2 |  73567.0 |    73120 |   114751 |     19266.0 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nhwckrsc_nchw_tilesize128x128x16_stage4_warpsize2x… |
+|      6.7 |         7162299 |       550 |  13022.4 |  12288.0 |     7552 |    20928 |      3870.4 | sm80_xmma_gemm_f32f32_tf32f32_f32_nn_n_tilesize64x128x16_stage4_warpsize2x2x1_tensor16x8x8_execute_… |
+|      3.7 |         3996567 |       950 |   4206.9 |   3232.0 |     2207 |    10496 |      2329.8 | void genericReformat::copyPackedKernel<float, float, (bool)0, (bool)1, genericReformat::ArrayN<(int… |
+|      3.7 |         3937596 |       400 |   9844.0 |   9839.5 |     5408 |    15680 |      3751.0 | sm80_xmma_gemm_f32f32_tf32f32_f32_tn_n_tilesize32x32x64_stage3_warpsize2x1x2_tensor16x8x8_execute_k… |
+|      3.4 |         3685538 |        50 |  73710.8 |  73711.5 |    73535 |    74016 |       110.8 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x128x16_stage4_warpsize2x… |
+|      3.3 |         3580632 |       250 |  14322.5 |  19136.0 |     4640 |    24224 |      7931.0 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x16x64_st… |
+|      3.1 |         3321407 |       250 |  13285.6 |  12640.0 |    11168 |    17856 |      2191.1 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x16x32_st… |
+|      3.0 |         3195652 |      1050 |   3043.5 |   2016.0 |     1440 |     8192 |      1956.1 | void cuInt8::nchwToNhwcKernel<float>(int, int, int, int, int, int, int, int, bool, const T1 *, T1 *) |
+|      2.8 |         2995745 |       950 |   3153.4 |   2784.0 |     1408 |     6976 |      1678.3 | void cuInt8::nhwcToNchwKernel<float>(int, int, int, int, int, int, int, int, const T1 *, T1 *)       |
+|      2.6 |         2746119 |       300 |   9153.7 |   7904.0 |     7711 |    11968 |      1842.1 | sm80_xmma_fprop_wngd_f32f32_f32_f32_nchwkcrs_nchw_tilesize8x16x16x8_warpsize8x1x1_wngd2x2_execute_k… |
+|      2.4 |         2631981 |       150 |  17546.5 |  12160.0 |    11584 |    29120 |      7728.1 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x32x16_st… |
+|      2.4 |         2626791 |        50 |  52535.8 |  52560.0 |    51711 |    53152 |       353.5 | sm80_xmma_fprop_implicit_gemm_f32f32_f32f32_f32_nchwkcrs_nchw_tilesize128x16x8_stage3_warpsize4x1x1… |
+|      2.3 |         2503468 |       150 |  16689.8 |  14720.0 |     8192 |    27295 |      7798.1 | sm80_xmma_gemm_f32f32_tf32f32_f32_tn_n_tilesize64x128x16_stage4_warpsize2x2x1_tensor16x8x8_execute_… |
+|      2.0 |         2106704 |        50 |  42134.1 |  42176.0 |    41664 |    42464 |       174.1 | trt_ampere_scudnn_128x32_sliced1x4_ldg4_relu_exp_interior_nhwc_tn_v1                                 |
+|      1.8 |         1919692 |       300 |   6399.0 |   5088.0 |     3072 |    11552 |      3018.2 | sm50_xmma_convolution_trt_depthwiseFP32NHWC4_fp32nhwcx4_fp32nhwcx4_fp32kcrs_execute_kernel_trt       |
+|      1.5 |         1649939 |       100 |  16499.4 |  16512.0 |    16320 |    17408 |       136.4 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nchwkrsc_nchw_tilesize128x128x16_stage4_warpsize2x… |
+|      1.3 |         1418902 |        50 |  28378.0 |  28352.0 |    27968 |    28991 |       258.4 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x32x16_st… |
+|      1.2 |         1312022 |       150 |   8746.8 |   2752.0 |     2656 |    21440 |      8532.7 | void CUTENSOR_NAMESPACE::permutationKernelPLC3<CUTENSOR_NAMESPACE::VectorWrite2DTensorView<(unsigne… |
+|      1.2 |         1291092 |        50 |  25821.8 |  25823.5 |    25728 |    25984 |        56.9 | sm70_xmma_fprop_implicit_gemm_f32f32_f32f32_f32_nchwkcrs_nchw_tilesize128x32x8_stage1_warpsize2x2x1… |
+|      1.2 |         1245689 |       100 |  12456.9 |  12448.0 |    10816 |    14688 |      1415.1 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nchwkrsc_nchw_tilesize128x32x16_stage2_warpsize2x2… |
+|      1.1 |         1188046 |       200 |   5940.2 |   4608.0 |     3968 |    10592 |      2659.2 | void CUTENSOR_NAMESPACE::permutationKernelPLC3<CUTENSOR_NAMESPACE::VectorWrite2DTensorView<(unsigne… |
+|      1.1 |         1152213 |       100 |  11522.1 |  11520.0 |    11072 |    12032 |       226.2 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x32x64_st… |
+|      1.0 |         1026803 |        50 |  20536.1 |  20512.0 |    20255 |    20831 |       133.5 | trt_ampere_scudnn_128x64_sliced1x2_ldg4_relu_exp_interior_nhwc_tn_v1                                 |
+|      0.9 |          985653 |        50 |  19713.1 |  19839.5 |    12928 |    20864 |      1103.9 | fused_k1::preprocess_Kernal(const unsigned char *, float *, LetterboxMeta, unsigned char, int)       |
+|      0.9 |          926393 |       350 |   2646.8 |   2656.0 |     2591 |     2720 |        23.1 | __myl_MoveNegExpAddDivMul_0x4f705abb57c99b5634f7c70415dfe482_vec                                     |
+|      0.9 |          916305 |       150 |   6108.7 |   6080.0 |     5536 |     6752 |       331.2 | sm70_xmma_fprop_implicit_gemm_f32f32_f32f32_f32_nchwkcrs_nchw_tilesize32x32x8_stage1_warpsize1x2x1_… |
+|      0.8 |          914780 |       150 |   6098.5 |   6112.0 |     5696 |     6368 |       165.9 | sm50_xmma_pooling_max_nhwc_FP32FP32_WINDOWSIZE_5_NOT_PROPAGATE_NAN_2D_execute_kernel_trt             |
+|      0.8 |          876632 |       100 |   8766.3 |   8752.0 |     6176 |    11456 |      2579.7 | ResizeNearest2DKernel                                                                                |
+|      0.8 |          852764 |       100 |   8527.6 |   8559.5 |     7328 |     9632 |       994.0 | sm70_xmma_fprop_implicit_gemm_f32f32_f32f32_f32_nchwkcrs_nchw_tilesize128x16x8_stage1_warpsize4x1x1… |
+|      0.8 |          847284 |       200 |   4236.4 |   4224.0 |     4160 |     4352 |        30.4 | __myl_MoveNegExpAddDivMul_0xa36b4450b05dd4954d11bab801d713b6_vec                                     |
+|      0.7 |          703093 |       100 |   7030.9 |   7040.0 |     6944 |     7200 |        47.1 | __myl_MoveNegExpAddDivMul_0x1813d5aff93f6c4a970ed7c5d6a35cb3_vec                                     |
+|      0.6 |          698172 |        50 |  13963.4 |  13951.0 |    13824 |    14464 |       118.3 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nchwkrsc_nchw_tilesize128x64x16_stage2_warpsize2x2… |
+|      0.6 |          636474 |        50 |  12729.5 |  12704.0 |    12640 |    13024 |        84.5 | __myl_MoveNegExpAddDivMul_0x3bc6d3979e282b541772be00635baded_vec                                     |
+|      0.6 |          631868 |       300 |   2106.2 |   2112.0 |     1984 |     2176 |        43.5 | __myl_MoveNegExpAddDivMul_0x29dc3cc67c7816a3d9284c76c9fa60ef_vec                                     |
+|      0.6 |          597754 |        50 |  11955.1 |  11967.5 |    11904 |    12000 |        19.4 | void genericReformat::copyPackedKernel<float, float, (bool)1, (bool)1, genericReformat::ArrayN<(int… |
+|      0.5 |          572316 |        50 |  11446.3 |  11455.0 |    11264 |    11648 |        73.8 | sm80_xmma_fprop_implicit_gemm_f32f32_tf32f32_f32_nhwckrsc_nchw_tilesize128x128x16_stage4_warpsize2x… |
+|      0.5 |          569788 |       300 |   1899.3 |   1312.0 |     1120 |     4544 |      1184.1 | void genericReformat::copyVectorizedKernel<double, float, float, (bool)1, (bool)0, (int)4>(unsigned… |
+|      0.5 |          561086 |       150 |   3740.6 |   3744.0 |     3616 |     3904 |        45.4 | __myl_MoveNegExpAddDivMul_0x91bc6c5be3884b8fc8c42f0332eccd17_vec                                     |
+|      0.5 |          536826 |        50 |  10736.5 |  10720.0 |    10623 |    11392 |       104.9 | __myl_MoveNegExpAddDivMul_0xae64a76b6db01b1f929120f520246be5_vec                                     |
+|      0.5 |          490776 |        50 |   9815.5 |   9824.0 |     9632 |    10016 |        86.7 | sm80_xmma_gemm_f32f32_tf32f32_f32_nn_n_tilesize32x32x64_stage3_warpsize2x1x2_tensor16x8x8_execute_k… |
+|      0.4 |          459645 |        50 |   9192.9 |   9184.0 |     9024 |     9344 |        73.7 | sm50_xmma_softmax_trt_NCHW_FP32_Dim2_Threads256_execute2_kernel_trt                                  |
+|      0.4 |          442780 |       100 |   4427.8 |   4416.0 |     4352 |     4512 |        34.8 | __myl_MoveNegExpAddDivMul_0x7f5c5ad2680088af7b174f54f44a8fb1_vec                                     |
+|      0.4 |          397405 |       200 |   1987.0 |   1984.0 |     1920 |     2048 |        23.5 | __myl_MoveNegExpAddDivMul_0x16e5b9c597008ce9028709910378b8cc_vec                                     |
+|      0.3 |          362299 |       300 |   1207.7 |   1216.0 |     1183 |     1248 |        14.5 | __myl_MoveNegExpAddDivMul_0xce9a7c102808882157007412d14dbd69                                         |
+|      0.3 |          352284 |        50 |   7045.7 |   7040.0 |     6976 |     7136 |        39.7 | __myl_MoveNegExpAddDivMul_0xe43e4fce4df9fedcb6365df3a44291af_vec                                     |
+|      0.3 |          335772 |        50 |   6715.4 |   6720.0 |     6624 |     6880 |        54.1 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x16x32_st… |
+|      0.3 |          297338 |       100 |   2973.4 |   2976.0 |     2943 |     3040 |        24.8 | __myl_MoveNegExpAddDivMulAdd_0x929cff7236dd5c69e566c7a57ef62884_vec                                  |
+|      0.3 |          280736 |        50 |   5614.7 |   5600.0 |     5472 |     5824 |        97.4 | __myl_DivMulTran_0x701c6afaba399e3acdccbd20f0778f05                                                  |
+|      0.3 |          274012 |        50 |   5480.2 |   5472.0 |     5248 |     5760 |       121.4 | sm80_xmma_fprop_implicit_gemm_indexed_wo_smem_f32f32_tf32f32_f32_nhwckrsc_nhwc_tilesize128x32x64_st… |
+|      0.2 |          268638 |        50 |   5372.8 |   5376.0 |     5280 |     5536 |        52.6 | __myl_MaxrSubExpSum_0x2f93657b3df27d2b46f7a49f092a1694_vec                                           |
+|      0.2 |          244699 |        50 |   4894.0 |   4895.5 |     4800 |     5024 |        53.5 | __myl_MoveNegExpAddDivMul_0x84635885a5272d5b3c3006629885ac1c_vec                                     |
+|      0.2 |          244384 |       150 |   1629.2 |   1632.0 |     1600 |     1664 |        16.1 | __myl_MoveNegExpAddDivMul_0xe1d8f6be3b7bd855d0dd7080597123da                                         |
+|      0.2 |          230878 |       100 |   2308.8 |   2304.0 |     2271 |     2336 |        17.8 | __myl_MoveNegExpAddDivMulAdd_0x91c468659871a48db48df0f1af2b3b07_vec                                  |
+|      0.2 |          216893 |       100 |   2168.9 |   2176.0 |     2144 |     2240 |        19.6 | __myl_MoveNegExpAddDivMul_0x5d9104796c90bc8a4ed9dad02f7d74ea_vec                                     |
+|      0.2 |          201851 |       100 |   2018.5 |   2016.0 |     1984 |     2048 |        17.4 | __myl_MoveNegExpAddDivMul_0xc0247439201b9dcbad56d6d492a562c0                                         |
+|      0.2 |          198623 |       100 |   1986.2 |   1984.0 |     1952 |     2048 |        23.3 | __myl_MoveNegExpAddDivMul_0xa423f06f2a39416e622a0df40ffb98a2_vec                                     |
+|      0.2 |          197246 |       100 |   1972.5 |   1984.0 |     1951 |     2016 |        20.1 | __myl_MoveNegExpAddDivMul_0xf174de3b3588e5bd4433eaa3e668e596                                         |
+|      0.2 |          196475 |       100 |   1964.8 |   1952.0 |     1920 |     2016 |        23.2 | __myl_MoveNegExpAddDivMul_0x579b78cdac82bb9fb7907471a424d63e_vec                                     |
+|      0.2 |          193277 |        50 |   3865.5 |   3871.0 |     3807 |     4544 |       101.8 | __myl_MoveNegExpAddDivMulAdd_0x2b0c7159597bfa5d8e7b48c2e46267a8_vec                                  |
+|      0.2 |          189182 |       100 |   1891.8 |   1888.0 |     1856 |     1952 |        15.3 | __myl_MoveNegExpAddDivMul_0xc10666dc52e44ac68bbd7e666d2d92f3_vec                                     |
+|      0.2 |          188573 |       150 |   1257.2 |   1216.0 |     1183 |     1408 |        87.3 | void genericReformat::copyVectorizedKernel<double, float, float, (bool)1, (bool)0, (int)3>(unsigned… |
+|      0.2 |          186174 |       150 |   1241.2 |   1248.0 |     1215 |     1280 |        14.2 | __myl_MoveNegExpAddDivMul_0xdd696a28dd2a58f4c4254c7d7fdd9708                                         |
+|      0.2 |          184511 |       100 |   1845.1 |   1856.0 |     1792 |     1888 |        21.4 | __myl_MoveNegExpAddDivMulAdd_0xfe8b6b25c1f6a3e0bd9917690f914632                                      |
+|      0.2 |          175135 |        50 |   3502.7 |   3488.0 |     3456 |     3584 |        33.1 | sm70_xmma_convolution_depthwiseConv_fp32fp32_trt_kernel_fp32_TR3_TS3_execute_kernel_trt              |
+|      0.1 |          148093 |       100 |   1480.9 |   1472.0 |     1440 |     1504 |        15.8 | __myl_MoveNegExpAddDivMulAdd_0x6a10f3c715696e245588337d4dcdef0b                                      |
+|      0.1 |          134238 |       100 |   1342.4 |   1344.0 |     1312 |     1376 |        11.5 | __myl_MoveNegExpAddDivMul_0xf3f260ddfb9349eafaea7725e58256ca                                         |
+|      0.1 |          133151 |        50 |   2663.0 |   2656.0 |     2624 |     3136 |        70.9 | __myl_MoveNegExpAddDivMul_0x3809f38a5799279e7af699fe154f481b_vec                                     |
+|      0.1 |          132416 |       100 |   1324.2 |   1312.0 |     1312 |     1344 |        15.6 | __myl_MoveNegExpAddDivMulAdd_0x6569257d53b1e5fc51bfb07178c7bc3d                                      |
+|      0.1 |          130080 |       100 |   1300.8 |   1296.0 |     1216 |     1376 |        50.9 | __myl_MoveNegExpAddDivMul_0xaec3b1c6da544838510d7f3a4392d841                                         |
+|      0.1 |          127550 |        50 |   2551.0 |   2544.0 |     2496 |     2624 |        35.4 | __myl_MoveNegExpAddDivMul_0xf9047284684e55a0ea726dd0a774a640_vec                                     |
+|      0.1 |           99838 |        50 |   1996.8 |   1984.0 |     1952 |     2016 |        18.3 | __myl_ReshSubAddSubAddMulConcMulConc_0x2fa98bdc0a974eaed921de9647834d6b_vec                          |
+|      0.1 |           99712 |        50 |   1994.2 |   1984.0 |     1920 |     2080 |        37.4 | __myl_MoveNegExpAddDivMul_0xdcf06d184a3a2533847811966dc6fb7b_vec                                     |
+|      0.1 |           99039 |        50 |   1980.8 |   1984.0 |     1952 |     2016 |        17.4 | __myl_MoveNegExpAddDivMul_0xcaa02af864be94d4242feffd932e737f                                         |
+|      0.1 |           98910 |        50 |   1978.2 |   1984.0 |     1951 |     2016 |        16.7 | __myl_MoveNegExpAddDivMul_0xa8c57ffa7cbe146cc82beba44e44fe19                                         |
+|      0.1 |           98464 |        50 |   1969.3 |   1984.0 |     1952 |     2016 |        17.4 | void genericReformat::copyPackedKernel<float, float, (bool)1, (bool)1, genericReformat::IdentityCoo… |
+|      0.1 |           81344 |        50 |   1626.9 |   1632.0 |     1600 |     1664 |        16.3 | __myl_MoveNegExpAddDivMul_0x9616efd8f63401ab5644a46981aff0d1                                         |
+|      0.1 |           78176 |        50 |   1563.5 |   1568.0 |     1536 |     1600 |        15.8 | __myl_Add_0x1cb1b3d5ab121b9aa1309c34547355ab                                                         |
+|      0.1 |           71040 |        50 |   1420.8 |   1408.0 |     1408 |     1472 |        18.3 | __myl_MoveSlicSlic_0x00c00db5d2b63cbbb1a6043cac92d1eb                                                |
+|      0.1 |           68864 |        50 |   1377.3 |   1376.0 |     1344 |     1408 |         9.1 | __myl_Tran_0x45d33db32daa130e09327dcc2e2e0b1f                                                        |
+|      0.1 |           62111 |        50 |   1242.2 |   1248.0 |     1216 |     1280 |        14.0 | __myl_NegExpAddDiv_0x609cf479ed4dbd5b0b55126b1894aee3                                                |
+|      0.0 |           50944 |        50 |   1018.9 |   1024.0 |      992 |     1056 |        13.5 | __myl_IotaCastCastAddReshReplReshReshReplReshConcReshIotaCastCastAddReshReplReshReshReplReshConcEtc… |
+|      0.0 |            5088 |         4 |   1272.0 |   1264.0 |     1216 |     1344 |        54.7 | void cask_trt::computeOffsetsKernel<(bool)0, (bool)0>(cask_trt::ComputeOffsetsParams)                |
++----------+-----------------+-----------+----------+----------+----------+----------+-------------+------------------------------------------------------------------------------------------------------+
+
+Processing [/tmp/opencode/async_nsys_2026_5_1.sqlite] with [/tmp/opencode/nsight-2026.5.1/opt/nvidia/nsight-systems/2026.5.1/target-linux-x64/reports/cuda_api_sum.py]... 
+
+ ** CUDA API Summary (cuda_api_sum):
+
++----------+-----------------+-----------+-------------+------------+----------+------------+-------------+--------------------------+
+| Time (%) | Total Time (ns) | Num Calls |  Avg (ns)   |  Med (ns)  | Min (ns) |  Max (ns)  | StdDev (ns) |           Name           |
++----------+-----------------+-----------+-------------+------------+----------+------------+-------------+--------------------------+
+|     65.6 |      1276301426 |         7 | 182328775.1 | 12362140.0 |    78717 | 1206339925 | 451677274.0 | cuLibraryLoadData        |
+|     19.7 |       383101926 |      4004 |     95679.8 |    10225.5 |     4643 |  308156393 |   4870358.3 | cudaLaunchKernel         |
+|      3.5 |        67967446 |      4450 |     15273.6 |     9975.5 |     4106 |     727002 |     28580.7 | cuLaunchKernelEx         |
+|      3.4 |        66108603 |      4350 |     15197.4 |    10316.5 |     4931 |     462236 |     24036.1 | cuLaunchKernel           |
+|      1.4 |        27050772 |        89 |    303941.3 |   247161.0 |   134433 |    1572217 |    184865.2 | cuModuleLoadData         |
+|      0.9 |        17784489 |        28 |    635160.3 |   271264.5 |    76515 |    7591740 |   1391068.6 | cuModuleLoadFatBinary    |
+|      0.9 |        16996903 |         5 |   3399380.6 |    13307.0 |    10648 |   16941182 |   7570097.9 | cudaMallocAsync          |
+|      0.8 |        14633813 |      1091 |     13413.2 |     9102.0 |      147 |     404059 |     18862.1 | cudaMemsetAsync          |
+|      0.7 |        13410752 |         6 |   2235125.3 |   640548.0 |   447598 |    9660387 |   3657520.2 | cudaMalloc               |
+|      0.7 |        13233577 |        56 |    236313.9 |    98524.0 |     1036 |    1508801 |    300888.5 | cudaStreamSynchronize    |
+|      0.6 |        11869657 |         3 |   3956552.3 |  2555143.0 |  1830959 |    7483555 |   3075861.1 | cudaMallocHost           |
+|      0.6 |        10927870 |       190 |     57515.1 |    25969.5 |      117 |    2855921 |    221245.0 | cudaMemcpyAsync          |
+|      0.3 |         5824399 |       117 |     49781.2 |    27741.0 |     8755 |    1604387 |    151315.0 | cuModuleUnload           |
+|      0.2 |         4705653 |         3 |   1568551.0 |   996982.0 |   905639 |    2803032 |   1070067.0 | cudaFreeHost             |
+|      0.2 |         4001103 |        12 |    333425.3 |   248162.0 |     1636 |    1448682 |    428261.8 | cudaFree                 |
+|      0.2 |         3721916 |      4000 |       930.5 |      584.0 |      264 |      60684 |      2779.6 | cudaStreamIsCapturing    |
+|      0.1 |         2833077 |         5 |    566615.4 |    10163.0 |     6509 |    2797817 |   1247281.0 | cudaStreamCreate         |
+|      0.1 |         1763664 |        90 |     19596.3 |     7056.5 |     6146 |     605899 |     66002.6 | cudaEventRecord          |
+|      0.1 |         1516635 |      3900 |       388.9 |      224.0 |       82 |      49445 |      1650.4 | cuKernelGetName          |
+|      0.1 |         1407441 |       718 |      1960.2 |      423.0 |      389 |     870205 |     32483.3 | cudaEventCreateWithFlags |
+|      0.0 |          318822 |       718 |       444.0 |      343.0 |      325 |      16829 |       680.7 | cudaEventDestroy         |
+|      0.0 |          308103 |        80 |      3851.3 |     3537.5 |     2728 |       9280 |      1263.3 | cuEventCreate            |
+|      0.0 |          219602 |        80 |      2745.0 |     2427.5 |     1470 |       9162 |      1134.7 | cuCtxSetCurrent          |
+|      0.0 |          168658 |         1 |    168658.0 |   168658.0 |   168658 |     168658 |         0.0 | cuMemcpyAsync            |
+|      0.0 |          131704 |        90 |      1463.4 |     1125.5 |      984 |       7586 |      1204.4 | cudaStreamWaitEvent      |
+|      0.0 |           94692 |       480 |       197.3 |      161.0 |      102 |       4991 |       238.6 | cuGetProcAddress_v2      |
+|      0.0 |           78466 |        80 |       980.8 |      715.5 |      381 |       3802 |       761.9 | cuEventDestroy_v2        |
+|      0.0 |           46664 |         5 |      9332.8 |     9650.0 |     2092 |      14545 |      5151.0 | cudaStreamDestroy        |
+|      0.0 |           46044 |        50 |       920.9 |      828.0 |      398 |       1957 |       365.5 | cuStreamGetGreenCtx      |
+|      0.0 |           32979 |         4 |      8244.8 |     9524.5 |     1214 |      12716 |      5071.7 | cudaDeviceSynchronize    |
+|      0.0 |           31120 |        13 |      2393.8 |     1829.0 |      529 |       6534 |      1895.5 | cuLibraryGetKernel       |
+|      0.0 |            9802 |         1 |      9802.0 |     9802.0 |     9802 |       9802 |         0.0 | cuStreamCreate           |
+|      0.0 |            8815 |         2 |      4407.5 |     4407.5 |     2334 |       6481 |      2932.4 | cudaFreeAsync            |
+|      0.0 |            6643 |         3 |      2214.3 |      841.0 |      343 |       5459 |      2821.0 | cuModuleGetLoadingMode   |
+|      0.0 |            3819 |         1 |      3819.0 |     3819.0 |     3819 |       3819 |         0.0 | cuStreamSynchronize      |
+|      0.0 |            2607 |         1 |      2607.0 |     2607.0 |     2607 |       2607 |         0.0 | cuInit                   |
+|      0.0 |            2320 |         1 |      2320.0 |     2320.0 |     2320 |       2320 |         0.0 | cuStreamDestroy_v2       |
+|      0.0 |            1198 |         1 |      1198.0 |     1198.0 |     1198 |       1198 |         0.0 | cudaGetDeviceProperties  |
++----------+-----------------+-----------+-------------+------------+----------+------------+-------------+--------------------------+
+
+Processing [/tmp/opencode/async_nsys_2026_5_1.sqlite] with [/tmp/opencode/nsight-2026.5.1/opt/nvidia/nsight-systems/2026.5.1/target-linux-x64/reports/cuda_gpu_mem_time_sum.py]... 
+
+ ** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
+
++----------+-----------------+-------+----------+----------+----------+----------+-------------+--------------------------------+
+| Time (%) | Total Time (ns) | Count | Avg (ns) | Med (ns) | Min (ns) | Max (ns) | StdDev (ns) |           Operation            |
++----------+-----------------+-------+----------+----------+----------+----------+-------------+--------------------------------+
+|     88.3 |        22631437 |    52 | 435219.9 | 406524.0 |     3680 |  1914638 |    222294.6 | [CUDA memcpy Host-to-Device]   |
+|      6.0 |         1548241 |    51 |  30357.7 |  29088.0 |     2112 |    42752 |      5715.5 | [CUDA memcpy Device-to-Host]   |
+|      5.6 |         1441492 |  1005 |   1434.3 |    864.0 |      831 |   542235 |     17076.7 | [CUDA memset]                  |
+|      0.0 |            3232 |     2 |   1616.0 |   1616.0 |     1472 |     1760 |       203.6 | [CUDA memcpy Device-to-Device] |
++----------+-----------------+-------+----------+----------+----------+----------+-------------+--------------------------------+
+
+Processing [/tmp/opencode/async_nsys_2026_5_1.sqlite] with [/tmp/opencode/nsight-2026.5.1/opt/nvidia/nsight-systems/2026.5.1/target-linux-x64/reports/osrt_sum.py]... 
+
+ ** OS Runtime Summary (osrt_sum):
+
++----------+-----------------+-----------+-------------+-------------+----------+------------+-------------+------------------------+
+| Time (%) | Total Time (ns) | Num Calls |  Avg (ns)   |  Med (ns)   | Min (ns) |  Max (ns)  | StdDev (ns) |          Name          |
++----------+-----------------+-----------+-------------+-------------+----------+------------+-------------+------------------------+
+|     89.3 |     95891251278 |       318 | 301544815.3 |   2655456.0 |     2821 | 3569536914 | 857513074.4 | pthread_cond_wait      |
+|      8.2 |      8816428191 |        93 |  94800303.1 | 100160447.0 |     2095 |  100408941 |  21140658.3 | poll                   |
+|      2.1 |      2219128963 |        39 |  56900742.6 |    174293.0 |     8815 | 2197263977 | 351757573.8 | pthread_join           |
+|      0.3 |       286780011 |     16042 |     17876.8 |      3556.0 |     1145 |   25254442 |    328516.5 | ioctl                  |
+|      0.1 |        78272000 |         4 |  19568000.0 |  15834315.0 |   633631 |   45969739 |  22570334.4 | fread                  |
+|      0.0 |        39945443 |        35 |   1141298.4 |     14478.0 |     1059 |   31449121 |   5301563.6 | read                   |
+|      0.0 |        11493479 |        16 |    718342.4 |    961000.0 |     1329 |    2122876 |    717178.6 | write                  |
+|      0.0 |         5677933 |       209 |     27167.1 |     26358.0 |     1681 |      92238 |      9481.2 | pthread_cond_signal    |
+|      0.0 |         4021593 |        23 |    174851.9 |    134611.0 |    77011 |     755726 |    140044.9 | pthread_create         |
+|      0.0 |         3713869 |        28 |    132638.2 |      7721.5 |     1042 |    1728742 |    393000.8 | fopen                  |
+|      0.0 |         2837744 |        31 |     91540.1 |     19116.0 |     2230 |     570176 |    164001.0 | mmap                   |
+|      0.0 |         2456037 |       134 |     18328.6 |     15420.0 |     1067 |      72704 |      9486.0 | pthread_cond_broadcast |
+|      0.0 |         2412371 |         5 |    482474.2 |      8582.0 |     5356 |    2381026 |   1061323.8 | open                   |
+|      0.0 |         1759796 |         2 |    879898.0 |    879898.0 |    32794 |    1727002 |   1197986.0 | open64                 |
+|      0.0 |          823744 |        21 |     39225.9 |      7775.0 |     1230 |     524997 |    114324.2 | fclose                 |
+|      0.0 |          596980 |         4 |    149245.0 |     72305.0 |    53940 |     398430 |    166602.2 | pthread_cond_timedwait |
+|      0.0 |          543647 |        10 |     54364.7 |     45699.5 |    10390 |     148423 |     37437.6 | pthread_mutex_lock     |
+|      0.0 |          493010 |        16 |     30813.1 |     24740.0 |     6634 |      64236 |     14757.6 | prctl                  |
+|      0.0 |          413584 |         7 |     59083.4 |      2432.0 |     1061 |     392037 |    146839.4 | close                  |
+|      0.0 |          298259 |         4 |     74564.8 |      4838.5 |     3564 |     285018 |    140306.7 | pipe2                  |
+|      0.0 |          250333 |         2 |    125166.5 |    125166.5 |     2612 |     247721 |    173318.2 | socket                 |
+|      0.0 |          177989 |        17 |     10469.9 |      4081.0 |     1037 |      79290 |     20664.3 | munmap                 |
+|      0.0 |          140278 |        10 |     14027.8 |      5166.0 |     2893 |      74376 |     22054.6 | fgets                  |
+|      0.0 |           68044 |         3 |     22681.3 |      2232.0 |     1789 |      64023 |     35803.6 | fwrite                 |
+|      0.0 |           49844 |         2 |     24922.0 |     24922.0 |     5957 |      43887 |     26820.6 | connect                |
+|      0.0 |           34916 |         7 |      4988.0 |      1409.0 |     1021 |      26655 |      9558.9 | fflush                 |
+|      0.0 |           27325 |         1 |     27325.0 |     27325.0 |    27325 |      27325 |         0.0 | ftruncate              |
+|      0.0 |           11735 |         1 |     11735.0 |     11735.0 |    11735 |      11735 |         0.0 | stat                   |
+|      0.0 |           11472 |         4 |      2868.0 |      2941.0 |     1723 |       3867 |       975.1 | fstat64                |
+|      0.0 |            7072 |         4 |      1768.0 |      1577.0 |     1307 |       2611 |       579.7 | fcntl                  |
+|      0.0 |            3164 |         2 |      1582.0 |      1582.0 |     1340 |       1824 |       342.2 | fcntl64                |
++----------+-----------------+-----------+-------------+-------------+----------+------------+-------------+------------------------+
+
